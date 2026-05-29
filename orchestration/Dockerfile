@@ -12,9 +12,11 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Install dependencies first (cached) using just the metadata, then the source is
-# bind-mounted at runtime by docker-compose so code edits don't need a rebuild.
+# Install third-party deps first (cached across code changes), then the project.
+# Splitting these means editing src/ only re-runs the cheap project-only sync,
+# not the full dependency resolution/install.
 COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --extra dagster --frozen --no-install-project
 COPY src ./src
 RUN uv sync --extra dagster --frozen
 
