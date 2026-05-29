@@ -17,8 +17,10 @@ Metabase dashboards) per `danang_realestate_spec_v2.md`.
 - [x] dbt `_sources.yml` + `source()` refs + `schema.yml` tests (dbt build PASS=32/32)
 - [x] Made tests hermetic (mock Nominatim + HTTP) + added scraper tests (11 tests pass)
 - [x] `git init` + initial commit (on `master`), dev deps (pytest/ruff), ruff+pytest config,
-      `.gitignore`, `.env.example`, GitHub Actions CI (ruff + pytest + dbt parse) ← CURRENTLY HERE
-- [ ] (Next) Push to a remote + confirm CI runs green on GitHub
+      `.gitignore`, `.env.example`, GitHub Actions CI (ruff + pytest + dbt parse)
+- [x] Renamed branch `master` → `main`, added remote
+      `git@github.com:ktran16/real-estate-service.git`, pushed `main` ← CURRENTLY HERE
+- [ ] (Next) Confirm CI runs green on GitHub (gh not authed in this env — check Actions tab)
 - [ ] (Next) Metabase dashboards to close out Phase 1 (Market Overview / Map / Trend)
 
 ## Key Context
