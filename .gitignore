@@ -31,3 +31,7 @@ dbt/logs/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# Metabase (driver jar + app state are downloaded/generated, not source)
+metabase/plugins/
+metabase/metabase-data/
