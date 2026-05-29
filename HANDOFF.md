@@ -12,11 +12,14 @@ Metabase dashboards) per `danang_realestate_spec_v2.md`.
 - [x] Bug #2 — deprecated `datetime.utcnow()` replaced with `utils/timeutil.utcnow()`
 - [x] Bug #3 — double `conn.close()` in `refresh_wards`
 - [x] Bug #4 — wired `.env` scrape config into `SafeHTTPClient`
-- [x] Verified: imports OK, 7/7 tests pass, price-change path runtime-tested ← CURRENTLY HERE
-- [ ] (Optional next) clean up `utcnow()` deprecation in test files
-- [ ] (Next) `git init` + dev deps (pytest/ruff) + minimal CI
-- [ ] (Next) dbt `_sources.yml` + `schema.yml` tests
-- [ ] (Next) Metabase dashboards to close out Phase 1
+- [x] Verified: imports OK, tests pass, price-change path runtime-tested
+- [x] Cleaned up `utcnow()` in test files
+- [x] dbt `_sources.yml` + `source()` refs + `schema.yml` tests (dbt build PASS=32/32)
+- [x] Made tests hermetic (mock Nominatim + HTTP) + added scraper tests (11 tests pass)
+- [x] `git init` + initial commit (on `master`), dev deps (pytest/ruff), ruff+pytest config,
+      `.gitignore`, `.env.example`, GitHub Actions CI (ruff + pytest + dbt parse) ← CURRENTLY HERE
+- [ ] (Next) Push to a remote + confirm CI runs green on GitHub
+- [ ] (Next) Metabase dashboards to close out Phase 1 (Market Overview / Map / Trend)
 
 ## Key Context
 - Stack: Python 3.11+, `uv`, Typer CLI, Pydantic v2, DuckDB, dbt-duckdb. Entry point
@@ -54,16 +57,24 @@ Remaining deprecation warnings are from `tests/test_geocoder.py:56` and
 `tests/test_normalizer.py:59` (test fixtures still call `datetime.utcnow()`), not src.
 
 ## Next Actions
-1. (Optional) Swap `datetime.utcnow()` in the two test files for `utils.timeutil.utcnow()`.
-2. `git init`, add `.env.example`, add dev deps (pytest, ruff, mypy), minimal CI (ruff + pytest).
-3. dbt: add `models/staging/_sources.yml` + convert bare table refs to `{{ source() }}`; add
-   `schema.yml` with not_null/unique/accepted_values tests; run `dbt test` in the pipeline.
-4. Make tests hermetic (mock Nominatim + HTTP).
-5. Stand up Metabase dashboards (Market Overview / Map / Trend) on the marts — Phase 1 finish.
+1. Create a GitHub remote and `git push -u origin master`; confirm the CI workflow
+   (`.github/workflows/ci.yml`) runs green there (ruff + pytest + dbt parse).
+2. Stand up Metabase dashboards (Market Overview / Map / Trend) on the marts — Phase 1 finish.
+3. (Future, per spec) Phase 2 `batdongsan.com.vn` scraper behind `BaseScraper`; Goong geocoding
+   (the `goong_api_key` config exists but is unused).
+
+### Verify current state (mirrors CI)
+```bash
+uv sync --dev
+uv run ruff check .                                   # All checks passed
+uv run pytest -q                                      # 11 passed
+cd dbt && uv run dbt parse --profiles-dir .           # parses clean
+cd dbt && uv run dbt build --profiles-dir .           # PASS=32 (needs data/danang.duckdb)
+```
 
 ## Open Questions
-- None blocking. User approved the four bug fixes ("go ahead"). Confirm whether they want the
-  optional/next-step items above tackled in this session or later.
+- None blocking. All planned next-step items for this session are done. Remaining work
+  (push to remote, Metabase) needs user input on the GitHub remote and Metabase host.
 
 ## Cross-Agent Notes
 - "Skills" referenced here (handoff-skill, code-review, run, verify) are Claude Code slash
