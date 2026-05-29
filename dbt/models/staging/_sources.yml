@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Raw tables populated by the Python ingestion pipeline (scrape / rescrape /
+      geocode) directly into DuckDB. dbt reads from these but never writes them.
+    schema: main
+    tables:
+      - name: raw_listings
+        description: One row per listing per source, upserted on (listing_id, source).
+        columns:
+          - name: listing_id
+            description: Source-native listing identifier.
+            tests:
+              - not_null
+          - name: source
+            description: Originating site (e.g. nhatot).
+            tests:
+              - not_null
+          - name: transaction_type
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ["sale", "rent"]
+
+      - name: listing_price_history
+        description: Append-only price observations and detected changes per listing.
+        columns:
+          - name: listing_id
+            tests:
+              - not_null
+          - name: observed_at
+            tests:
+              - not_null
+
+      - name: geocode_cache
+        description: Cached geocoding results keyed by raw address.
+        columns:
+          - name: address_raw
+            tests:
+              - not_null
+              - unique

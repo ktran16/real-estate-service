@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: listings
+    description: Analytics-ready listings, geocoded (cache coords backfilled).
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+      - name: source
+        tests:
+          - not_null
+      - name: transaction_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["sale", "rent"]
+      - name: is_broker
+        tests:
+          - not_null
+
+  - name: price_by_district
+    description: Aggregated price stats per district / property type / transaction type.
+    columns:
+      - name: district
+        tests:
+          - not_null
+      - name: listing_count
+        tests:
+          - not_null
+
+  - name: price_changes
+    description: Listings whose price moved by >= 5% between observations.
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+      - name: price_change_pct
+        tests:
+          - not_null
+
+  - name: price_trend
+    description: Weekly median price trend per district / property / transaction type.
+    columns:
+      - name: week_start
+        tests:
+          - not_null
+
+  - name: broker_listings
+    description: Accounts with >= 5 active listings (likely brokers).
+    columns:
+      - name: account_id
+        tests:
+          - not_null
+          - unique
+      - name: active_listing_count
+        tests:
+          - not_null

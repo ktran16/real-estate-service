@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies (incl. dev group)
+        run: uv sync --dev
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Run tests (pytest)
+        run: uv run pytest -q
+
+      - name: dbt parse (validate models & sources)
+        working-directory: dbt
+        run: uv run dbt parse --profiles-dir .

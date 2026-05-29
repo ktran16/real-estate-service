@@ -1,0 +1,479 @@
+{
+  "regions": [
+    {
+      "12": {
+        "name": "Hà Nội",
+        "area": [
+          {
+            "73": "Quận Hoàn Kiếm"
+          },
+          {
+            "74": "Quận Ba Đình"
+          },
+          {
+            "75": "Quận Đống Đa"
+          },
+          {
+            "76": "Quận Hai Bà Trưng"
+          },
+          {
+            "77": "Quận Thanh Xuân"
+          },
+          {
+            "78": "Quận Tây Hồ"
+          },
+          {
+            "79": "Quận Cầu Giấy"
+          },
+          {
+            "80": "Quận Hoàng Mai"
+          },
+          {
+            "81": "Quận Long Biên"
+          },
+          {
+            "82": "Huyện Đông Anh"
+          },
+          {
+            "83": "Huyện Sóc Sơn"
+          },
+          {
+            "84": "Huyện Thanh Trì"
+          },
+          {
+            "86": "Quận Hà Đông"
+          },
+          {
+            "87": "Thị Xã Sơn Tây"
+          },
+          {
+            "88": "Huyện Đan Phượng"
+          },
+          {
+            "89": "Huyện Hoài Đức"
+          },
+          {
+            "90": "Huyện Quốc Oai"
+          },
+          {
+            "91": "Huyện Thạch Thất"
+          },
+          {
+            "92": "Huyện Chương Mỹ"
+          },
+          {
+            "93": "Huyện Thường Tín"
+          },
+          {
+            "94": "Huyện Phú Xuyên"
+          },
+          {
+            "129": "Quận Bắc Từ Liêm"
+          },
+          {
+            "121": "Quận Nam Từ Liêm"
+          },
+          {
+            "122": "Huyện Ba Vì"
+          },
+          {
+            "123": "Huyện Gia Lâm"
+          },
+          {
+            "124": "Huyện Mê Linh"
+          },
+          {
+            "125": "Huyện Mỹ Đức"
+          },
+          {
+            "126": "Huyện Phúc Thọ"
+          },
+          {
+            "127": "Huyện Thanh Oai"
+          },
+          {
+            "128": "Huyện Ứng Hòa"
+          },
+          {
+            "95": "Quận huyện khác"
+          }
+        ]
+      }
+    },
+    {
+      "13": {
+        "name": "Tp Hồ Chí Minh",
+        "area": [
+          {
+            "96": "Quận 1"
+          },
+          {
+            "97": "Quận 2"
+          },
+          {
+            "98": "Quận 3"
+          },
+          {
+            "99": "Quận 4"
+          },
+          {
+            "100": "Quận 5"
+          },
+          {
+            "101": "Quận 6"
+          },
+          {
+            "102": "Quận 7"
+          },
+          {
+            "103": "Quận 8"
+          },
+          {
+            "104": "Quận 9"
+          },
+          {
+            "105": "Quận 10"
+          },
+          {
+            "106": "Quận 11"
+          },
+          {
+            "107": "Quận 12"
+          },
+          {
+            "108": "Quận Bình Tân"
+          },
+          {
+            "109": "Quận Bình Thạnh"
+          },
+          {
+            "110": "Quận Gò Vấp"
+          },
+          {
+            "111": "Quận Phú Nhuận"
+          },
+          {
+            "112": "Quận Tân Bình"
+          },
+          {
+            "113": "Quận Tân Phú"
+          },
+          {
+            "114": "Quận Thủ Đức"
+          },
+          {
+            "115": "Huyện Bình Chánh"
+          },
+          {
+            "116": "Huyện Củ Chi"
+          },
+          {
+            "117": "Huyện Hóc Môn"
+          },
+          {
+            "118": "Huyện Nhà Bè"
+          },
+          {
+            "120": "Huyện Cần Giờ"
+          },
+          {
+            "119": "Quận huyện khác"
+          }
+        ]
+      }
+    },
+    {
+      "10": {
+        "name": "Đông Bắc Bộ",
+        "area": [
+          {
+            "59": "Bắc Kạn"
+          },
+          {
+            "60": "Bắc Giang"
+          },
+          {
+            "61": "Cao Bằng"
+          },
+          {
+            "62": "Hà Giang"
+          },
+          {
+            "63": "Lạng Sơn"
+          },
+          {
+            "64": "Thái Nguyên"
+          },
+          {
+            "65": "Tuyên Quang"
+          },
+          {
+            "130": "Quảng Ninh"
+          },
+          {
+            "66": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "11": {
+        "name": "Tây Bắc Bộ",
+        "area": [
+          {
+            "67": "Điện Biên"
+          },
+          {
+            "68": "Lai Châu"
+          },
+          {
+            "69": "Lào Cai"
+          },
+          {
+            "70": "Sơn La"
+          },
+          {
+            "71": "Yên Bái"
+          },
+          {
+            "72": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "1": {
+        "name": "Các tỉnh lân cận Hà Nội",
+        "area": [
+          {
+            "1": "Bắc Ninh"
+          },
+          {
+            "2": "Phú Thọ"
+          },
+          {
+            "3": "Hà Nam"
+          },
+          {
+            "4": "Hải Dương"
+          },
+          {
+            "5": "Hòa Bình"
+          },
+          {
+            "6": "Hưng Yên"
+          },
+          {
+            "7": "Ninh Bình"
+          },
+          {
+            "8": "Vĩnh Phúc"
+          },
+          {
+            "9": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "4": {
+        "name": "Hải Phòng Nam Định Thái Bình",
+        "area": [
+          {
+            "19": "Hải Phòng"
+          },
+          {
+            "20": "Nam Định"
+          },
+          {
+            "21": "Thái Bình"
+          },
+          {
+            "23": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "8": {
+        "name": "Thanh Nghệ Tĩnh",
+        "area": [
+          {
+            "49": "Hà Tĩnh"
+          },
+          {
+            "50": "Nghệ An"
+          },
+          {
+            "51": "Thanh Hóa"
+          },
+          {
+            "52": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "6": {
+        "name": "Bình Trị Thừa Thiên Huế",
+        "area": [
+          {
+            "38": "Quảng Bình"
+          },
+          {
+            "39": "Quảng Trị"
+          },
+          {
+            "40": "Thừa Thiên Huế"
+          },
+          {
+            "41": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "3": {
+        "name": "Quảng Nam Đà Nẵng",
+        "area": [
+          {
+            "16": "Quảng Nam"
+          },
+          {
+            "17": "Đà Nẵng"
+          },
+          {
+            "18": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "9": {
+        "name": "Tây Nguyên",
+        "area": [
+          {
+            "53": "Đắk Lắk"
+          },
+          {
+            "54": "Đắk Nông"
+          },
+          {
+            "55": "Kon Tum"
+          },
+          {
+            "56": "Gia Lai"
+          },
+          {
+            "57": "Lâm Đồng"
+          },
+          {
+            "58": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "7": {
+        "name": "Nam Trung Bộ",
+        "area": [
+          {
+            "42": "Bình Thuận"
+          },
+          {
+            "43": "Bình Định"
+          },
+          {
+            "44": "Khánh Hòa"
+          },
+          {
+            "45": "Ninh Thuận"
+          },
+          {
+            "46": "Phú Yên"
+          },
+          {
+            "47": "Quảng Ngãi"
+          },
+          {
+            "48": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "2": {
+        "name": "Đông Nam Bộ",
+        "area": [
+          {
+            "10": "Bà Rịa Vũng Tàu"
+          },
+          {
+            "11": "Bình Dương"
+          },
+          {
+            "12": "Bình Phước"
+          },
+          {
+            "13": "Đồng Nai"
+          },
+          {
+            "14": "Tây Ninh"
+          },
+          {
+            "15": "Tỉnh khác"
+          }
+        ]
+      }
+    },
+    {
+      "5": {
+        "name": "Cần Thơ - Tây Nam Bộ",
+        "area": [
+          {
+            "24": "An Giang"
+          },
+          {
+            "25": "Bạc Liêu"
+          },
+          {
+            "26": "Bến Tre"
+          },
+          {
+            "27": "Cần Thơ"
+          },
+          {
+            "28": "Cà Mau"
+          },
+          {
+            "29": "Đồng Tháp"
+          },
+          {
+            "30": "Hậu Giang"
+          },
+          {
+            "31": "Kiên Giang"
+          },
+          {
+            "32": "Long An"
+          },
+          {
+            "33": "Sóc Trăng"
+          },
+          {
+            "34": "Tiền Giang"
+          },
+          {
+            "35": "Trà Vinh"
+          },
+          {
+            "36": "Vĩnh Long"
+          },
+          {
+            "37": "Tỉnh khác"
+          }
+        ]
+      }
+    }
+  ]
+}

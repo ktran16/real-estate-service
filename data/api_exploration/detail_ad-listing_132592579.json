@@ -1,0 +1,297 @@
+{
+  "ad": {
+    "account_id": 30076312,
+    "account_name": "Dương Phong",
+    "account_oid": "d81c5ca18d789987886b1185ec7fa6ba",
+    "ad_features": [],
+    "ad_id": 176318601,
+    "ad_labels": [],
+    "area": 17,
+    "area_name": "Quận Ngũ Hành Sơn",
+    "area_v2": 301705,
+    "avatar": "https://cdn.chotot.com/uac2/30076312",
+    "body": "Bán nhà 2 mặt tiền, 2 tầng xây chất lượng cao, kiên cố Đường Trần Xuân Hòa và 7m5, Phường Ngũ Hành Sơn, Đà Nẵng diện tích 140,2m² ( ngang 8 đẹp), 2 tầng, 2PN, 3WC.\nPháp lý đầy đủ, hướng Tây Bắc- Tây Nam.\nNội thất cơ bản, sẵn sàng cho việc vào ở ngay.\nMặt tiền rộng 8m, đường 7,5m, phù hợp cho kinh doanh hoặc để ở. Không gian thoáng đãng, rất thích hợp cho phong thủy.\n\nTiện ích xung quanh: gần bệnh viện mắt Sài Gòn Sông Hàn, bệnh viện đa khoa Ngũ Hành Sơn và công viên Cổ Cò, công viên Đầm",
+    "business_days": [],
+    "category": 1020,
+    "category_name": "Nhà ở",
+    "company_ad": true,
+    "contain_videos": 2,
+    "cta_buttons": [],
+    "date": "6 phút trước",
+    "direction": 8,
+    "fee_type": [],
+    "floors": 2,
+    "full_name": "Dương Phong",
+    "house_type": 1,
+    "image": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+    "image_thumbnails": [
+      {
+        "image": "https://cdn.chotot.com/5F-joZSIVIMvBV0qEvMOwjA-X-Dud7DZSoUXJJNp7Og/preset:view/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+        "thumbnail": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg"
+      },
+      {
+        "image": "https://cdn.chotot.com/HrNtSBZwSUhB3izE4dNfoHJwz-JkYgDcQKnBJhEb9Sk/preset:view/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg",
+        "thumbnail": "https://cdn.chotot.com/JG8tjMBoohWL3ubemfsHcIRbILJ-k551yqEPTbDyaYM/preset:listing/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg"
+      },
+      {
+        "image": "https://cdn.chotot.com/vlZ-a2xAwnsOSRJSboMtWnsDyDqzJiiWJZLkiY074Gk/preset:view/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg",
+        "thumbnail": "https://cdn.chotot.com/uXk3Skdam49M9wWSRowBfrEFUtbjf0S6xtiueh1Rc2M/preset:listing/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg"
+      }
+    ],
+    "images": [
+      "https://cdn.chotot.com/5F-joZSIVIMvBV0qEvMOwjA-X-Dud7DZSoUXJJNp7Og/preset:view/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+      "https://cdn.chotot.com/HrNtSBZwSUhB3izE4dNfoHJwz-JkYgDcQKnBJhEb9Sk/preset:view/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg",
+      "https://cdn.chotot.com/vlZ-a2xAwnsOSRJSboMtWnsDyDqzJiiWJZLkiY074Gk/preset:view/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg"
+    ],
+    "inspection_images": [],
+    "is_block_similar_ads_other_agent": true,
+    "is_sticky": false,
+    "is_zalo_show": true,
+    "job_tier": 0,
+    "label_campaigns": [],
+    "latitude": 15.986558,
+    "length": 16.2,
+    "list_id": 132592579,
+    "list_time": 1780044363000,
+    "living_size": 164.6999,
+    "location": "15.986558,108.2674092",
+    "longitude": 108.26741,
+    "number_of_images": 3,
+    "params": [
+      {
+        "id": "rooms",
+        "label": "Số phòng ngủ",
+        "value": "3 PN"
+      },
+      {
+        "id": "direction",
+        "label": "Hướng cửa chính",
+        "value": "Hướng Tây Nam"
+      },
+      {
+        "id": "house_type",
+        "label": "Loại hình",
+        "value": "Nhà mặt phố, mặt tiền"
+      }
+    ],
+    "phone": "091813****",
+    "price": 14000000000,
+    "price_million_per_m2": 100,
+    "price_string": "14 tỷ",
+    "property_legal_document": 1,
+    "protection_entitlement": false,
+    "pty_characteristics": [],
+    "pty_jupiter": 0,
+    "pty_map": "https://cdn.chotot.com/admincentre/location/15x987358_108x268209_c.jpg",
+    "pty_map_modifier": 0.0008,
+    "pty_map_v2": "https://cdn.chotot.com/admincentre/location/15x987358_108x268209_c_v2.jpg",
+    "pty_project_name": "",
+    "region": 3,
+    "region_name": "Đà Nẵng",
+    "region_name_v3": "TP Đà Nẵng",
+    "region_v2": 3017,
+    "rooms": 3,
+    "shop": {
+      "address": "Phường Hòa Hiệp Nam, Quận Liên Chiểu, Đà Nẵng",
+      "alias": "N2tdEUNkrtyXbV2",
+      "createdDate": "1779682274",
+      "modifiedDate": 1779719419,
+      "name": "Dương Phong",
+      "profileImageUrl": "https://cdn.chotot.com/uac2/30076312",
+      "service_type": "membership",
+      "shopsCategoriesRelationships": [
+        {
+          "categoryId": 1000
+        }
+      ],
+      "status": "accepted",
+      "urls": [
+        {
+          "url": "duong-phong"
+        }
+      ]
+    },
+    "shop_alias": "N2tdEUNkrtyXbV2",
+    "size": 140,
+    "size_unit_string": "m²",
+    "sold_ads": 1,
+    "special_display_images": [],
+    "specific_service_offered": [],
+    "state": "accepted",
+    "status": "active",
+    "sticky_ad_platinum": 0,
+    "stickyad_feature": "special_display",
+    "street_name": "Trần Xuân Hoà",
+    "street_number": "29",
+    "subject": "Bán nhà đẹp 2 mặt tiền ngang 8 Trần Xuân Hoà",
+    "thumbnail_image": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+    "type": "s",
+    "videos": [],
+    "ward": 6892,
+    "ward_name": "Phường Hoà Hải",
+    "ward_name_v3": "Phường Ngũ Hành Sơn",
+    "webp_image": "https://cdn.chotot.com/QNXJa5KOQKZ2OxmLq8Lvd7ubVR3eg45nRrqLRTyJZz4/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.webp",
+    "width": 8
+  },
+  "ad_params": {
+    "address": {
+      "id": "address",
+      "label": "Địa chỉ",
+      "value": "Trần Xuân Hoà, Phường Hoà Hải, Quận Ngũ Hành Sơn, Đà Nẵng"
+    },
+    "area": {
+      "id": "area",
+      "label": "Quận, Huyện",
+      "value": "Quận Ngũ Hành Sơn"
+    },
+    "direction": {
+      "id": "direction",
+      "label": "Hướng cửa chính",
+      "value": "Tây Nam"
+    },
+    "floors": {
+      "id": "floors",
+      "label": "Tổng số tầng",
+      "value": "2"
+    },
+    "house_type": {
+      "id": "house_type",
+      "label": "Loại hình",
+      "value": "Nhà mặt phố, mặt tiền"
+    },
+    "length": {
+      "id": "length",
+      "label": "Chiều dài",
+      "value": "16.2 m"
+    },
+    "living_size": {
+      "id": "living_size",
+      "label": "Diện tích sử dụng",
+      "value": "164.7 m²"
+    },
+    "price_m2": {
+      "id": "price_m2",
+      "label": "Giá/m²",
+      "value": "100 triệu/m²"
+    },
+    "property_legal_document": {
+      "id": "property_legal_document",
+      "label": "Giấy tờ pháp lý",
+      "value": "Đã có sổ"
+    },
+    "region": {
+      "id": "region",
+      "label": "Tỉnh, thành phố",
+      "value": "Đà Nẵng"
+    },
+    "rooms": {
+      "id": "rooms",
+      "label": "Số phòng ngủ",
+      "value": "3 phòng"
+    },
+    "size": {
+      "id": "size",
+      "label": "Diện tích đất",
+      "value": "140 m²"
+    },
+    "ward": {
+      "id": "ward",
+      "label": "Phường, thị xã, thị trấn",
+      "value": "Phường Hoà Hải"
+    },
+    "width": {
+      "id": "width",
+      "label": "Chiều ngang",
+      "value": "8 m"
+    }
+  },
+  "parameters": [
+    {
+      "id": "ward",
+      "label": "Phường, thị xã, thị trấn",
+      "value": "Phường Hoà Hải"
+    },
+    {
+      "id": "area",
+      "label": "Quận, Huyện",
+      "value": "Quận Ngũ Hành Sơn"
+    },
+    {
+      "id": "region",
+      "label": "Tỉnh, thành phố",
+      "value": "Đà Nẵng"
+    },
+    {
+      "id": "address",
+      "label": "Địa chỉ",
+      "value": "Trần Xuân Hoà, Phường Hoà Hải, Quận Ngũ Hành Sơn, Đà Nẵng"
+    },
+    {
+      "id": "house_type",
+      "label": "Loại hình",
+      "value": "Nhà mặt phố, mặt tiền"
+    },
+    {
+      "id": "size",
+      "label": "Diện tích đất",
+      "value": "140 m²"
+    },
+    {
+      "id": "living_size",
+      "label": "Diện tích sử dụng",
+      "value": "164.7 m²"
+    },
+    {
+      "id": "price_m2",
+      "label": "Giá/m²",
+      "value": "100 triệu/m²"
+    },
+    {
+      "id": "property_legal_document",
+      "label": "Giấy tờ pháp lý",
+      "value": "Đã có sổ"
+    },
+    {
+      "id": "rooms",
+      "label": "Số phòng ngủ",
+      "value": "3 phòng"
+    },
+    {
+      "id": "direction",
+      "label": "Hướng cửa chính",
+      "value": "Tây Nam"
+    },
+    {
+      "id": "width",
+      "label": "Chiều ngang",
+      "value": "8 m"
+    },
+    {
+      "id": "length",
+      "label": "Chiều dài",
+      "value": "16.2 m"
+    },
+    {
+      "id": "floors",
+      "label": "Tổng số tầng",
+      "value": "2"
+    }
+  ],
+  "params": [
+    {
+      "id": "rooms",
+      "label": "Số phòng ngủ",
+      "value": "3 PN"
+    },
+    {
+      "id": "direction",
+      "label": "Hướng cửa chính",
+      "value": "Hướng Tây Nam"
+    },
+    {
+      "id": "house_type",
+      "label": "Loại hình",
+      "value": "Nhà mặt phố, mặt tiền"
+    }
+  ]
+}

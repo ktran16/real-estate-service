@@ -1,0 +1,54 @@
+[project]
+name = "danang-realestate"
+version = "0.1.0"
+description = "Da Nang Real Estate Analytics Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx[http2]",
+    "beautifulsoup4",
+    "lxml",
+    "duckdb",
+    "dbt-duckdb",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "tenacity",
+    "python-dotenv",
+    "pandas",
+    "rich",
+    "typer",
+    "geopy",
+]
+
+[project.optional-dependencies]
+curl-cffi = ["curl_cffi"]
+playwright = ["playwright"]
+dagster = ["dagster", "dagster-duckdb"]
+
+[project.scripts]
+danang-realestate = "danang_realestate.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# pyflakes (F) + pycodestyle errors (E) + import sorting (I).
+select = ["E", "F", "I"]
+# Long lines are common in logging/console strings here; ignore E501.
+ignore = ["E501"]

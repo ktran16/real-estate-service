@@ -1,0 +1,1478 @@
+{
+  "categories": [
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "u": "Thuê"
+            },
+            {
+              "k": "Bán"
+            },
+            {
+              "h": "Cho Thuê"
+            }
+          ],
+          "name": "Căn hộ/Chung cư",
+          "parent": "1000",
+          "filter": "true",
+          "id": "1010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "u": "Cho thuê"
+            },
+            {
+              "k": "Cần mua"
+            },
+            {
+              "h": "Cần thuê"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "u": "Thuê"
+            },
+            {
+              "k": "Bán"
+            },
+            {
+              "h": "Cho Thuê"
+            }
+          ],
+          "name": "Nhà ở",
+          "parent": "1000",
+          "filter": "true",
+          "id": "1020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "u": "Cho thuê"
+            },
+            {
+              "k": "Cần mua"
+            },
+            {
+              "h": "Cần thuê"
+            }
+          ],
+          "friendly_name": "nha-dat",
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "u": "Thuê"
+            },
+            {
+              "k": "Bán"
+            },
+            {
+              "h": "Cho Thuê"
+            }
+          ],
+          "name": "Đất",
+          "parent": "1000",
+          "filter": "true",
+          "id": "1040",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "u": "Cho thuê"
+            },
+            {
+              "k": "Cần mua"
+            },
+            {
+              "h": "Cần thuê"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "u": "Thuê"
+            },
+            {
+              "k": "Bán"
+            },
+            {
+              "h": "Cho Thuê"
+            }
+          ],
+          "name": "Văn phòng, Mặt bằng kinh doanh",
+          "parent": "1000",
+          "filter": "true",
+          "id": "1030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "u": "Cho thuê"
+            },
+            {
+              "k": "Cần mua"
+            },
+            {
+              "h": "Cần thuê"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "u": "Thuê"
+            },
+            {
+              "h": "Cho Thuê"
+            }
+          ],
+          "name": "Phòng trọ",
+          "parent": "1000",
+          "filter": "true",
+          "id": "1050",
+          "types": [
+            {
+              "u": "Cho thuê"
+            },
+            {
+              "h": "Cần thuê"
+            }
+          ],
+          "giveaway": false
+        }
+      ],
+      "id": "1000",
+      "name": "Bất động sản",
+      "giveaway": false
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Ô tô",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Xe máy",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Xe tải, xe ben",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Xe điện",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2090",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Xe đạp",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Phương tiện khác",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2080",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Phụ tùng xe",
+          "parent": "2000",
+          "filter": "true",
+          "id": "2030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "2000",
+      "name": "Xe cộ",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Điện thoại",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Máy tính bảng",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5040",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Laptop",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Máy tính để bàn",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5070",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Máy ảnh, Máy quay",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Tivi, Âm thanh",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Thiết bị đeo thông minh",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5090",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Phụ kiện (Màn hình, Chuột...)",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "friendly_name": "phu-kien",
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Linh kiện (RAM, Card...)",
+          "parent": "5000",
+          "filter": "true",
+          "id": "5080",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "friendly_name": "linh-kien",
+          "giveaway": true
+        }
+      ],
+      "id": "5000",
+      "name": "Đồ điện tử",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Gà",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Chó",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Chim",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Mèo",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Thú cưng khác",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Phụ kiện, Thức ăn, Dịch vụ",
+          "parent": "12000",
+          "filter": "true",
+          "id": "12040",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "12000",
+      "name": "Thú cưng",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồ ăn, thực phẩm và các loại khác",
+          "parent": "7000",
+          "filter": "false",
+          "id": "7010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "friendly_name": "do-an-thuc-pham",
+          "giveaway": true
+        }
+      ],
+      "id": "7000",
+      "name": "Đồ ăn, thực phẩm và các loại khác",
+      "giveaway": true,
+      "feature": {
+        "is_new": true
+      }
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Tủ lạnh",
+          "parent": "9000",
+          "filter": "true",
+          "id": "9030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Máy lạnh, điều hoà",
+          "parent": "9000",
+          "filter": "true",
+          "id": "9060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Máy giặt",
+          "parent": "9000",
+          "filter": "true",
+          "id": "9070",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "9000",
+      "name": "Tủ lạnh, máy lạnh, máy giặt",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Bàn ghế",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14070",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Tủ, kệ gia đình",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14080",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Giường, chăn ga gối nệm",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Bếp, lò, đồ điện nhà bếp",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Dụng cụ nhà bếp",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Quạt",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đèn",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Cây cảnh, đồ trang trí",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14090",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Thiết bị vệ sinh, nhà tắm",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14040",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Nội thất, đồ gia dụng khác",
+          "parent": "14000",
+          "filter": "true",
+          "id": "14110",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "14000",
+      "name": "Đồ gia dụng, nội thất, cây cảnh",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Mẹ và bé",
+          "parent": "11000",
+          "filter": "true",
+          "id": "11010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "friendly_name": "do-dung-me-va-be",
+          "giveaway": true
+        }
+      ],
+      "id": "11000",
+      "name": "Mẹ và bé",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Quần áo",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồng hồ",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Giày dép",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Túi xách",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3070",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Nước hoa",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3080",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Phụ kiện thời trang khác",
+          "parent": "3000",
+          "filter": "true",
+          "id": "3090",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "3000",
+      "name": "Thời trang, Đồ dùng cá nhân",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Nhạc cụ",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4040",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Sách",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4070",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồ thể thao, Dã ngoại",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồ sưu tầm, đồ cổ",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Thiết bị chơi game",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4050",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Sở thích khác",
+          "parent": "4000",
+          "filter": "true",
+          "id": "4060",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "4000",
+      "name": "Giải trí, Thể thao, Sở thích",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồ dùng văn phòng",
+          "parent": "8000",
+          "filter": "false",
+          "id": "8010",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Đồ chuyên dụng, Giống nuôi trồng",
+          "parent": "8000",
+          "filter": "false",
+          "id": "8030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": true
+        }
+      ],
+      "id": "8000",
+      "name": "Đồ dùng văn phòng, công nông nghiệp",
+      "giveaway": true
+    },
+    {
+      "subcategories": [
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Dịch vụ",
+          "parent": "6000",
+          "filter": "false",
+          "id": "6020",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        },
+        {
+          "filter_types": [
+            {
+              "s": "Mua"
+            },
+            {
+              "k": "Bán"
+            }
+          ],
+          "name": "Du lịch",
+          "parent": "6000",
+          "filter": "false",
+          "id": "6030",
+          "types": [
+            {
+              "s": "Cần bán"
+            },
+            {
+              "k": "Cần mua"
+            }
+          ],
+          "giveaway": false
+        }
+      ],
+      "id": "6000",
+      "name": "Dịch vụ, Du lịch",
+      "giveaway": false
+    }
+  ]
+}

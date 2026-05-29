@@ -1,0 +1,21 @@
+{
+  "explored_at": "2026-05-29T15:48:13.359884",
+  "region_code": 48,
+  "categories": {
+    "1000": "total=10000",
+    "1010": "total=10000",
+    "1020": "total=10000",
+    "1040": "total=10000",
+    "14010": "Bếp, lò, đồ điện nhà bếp",
+    "14020": "Dụng cụ nhà bếp",
+    "14040": "Thiết bị vệ sinh, nhà tắm",
+    "1030": "total=10000"
+  },
+  "ward_count": 0,
+  "search_ad_keys": [],
+  "search_params_keys": [],
+  "detail_keys": [],
+  "detail_params_keys": [],
+  "offset_pagination_works": null,
+  "page_pagination_works": null
+}

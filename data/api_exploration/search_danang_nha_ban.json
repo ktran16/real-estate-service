@@ -1,0 +1,405 @@
+{
+  "ads": [
+    {
+      "account_id": 30076312,
+      "account_name": "Dương Phong",
+      "account_oid": "d81c5ca18d789987886b1185ec7fa6ba",
+      "ad_features": [],
+      "ad_id": 176318601,
+      "ad_labels": [],
+      "area": 17,
+      "area_name": "Quận Ngũ Hành Sơn",
+      "area_v2": 301705,
+      "avatar": "https://cdn.chotot.com/uac2/30076312",
+      "body": "Bán nhà 2 mặt tiền, 2 tầng xây chất lượng cao, kiên cố Đường Trần Xuân Hòa và 7m5, Phường Ngũ Hành Sơn, Đà Nẵng diện tích 140,2m² ( ngang 8 đẹp), 2 tầng, 2PN, 3WC.\nPháp lý đầy đủ, hướng Tây Bắc- Tây Nam.\nNội thất cơ bản, sẵn sàng cho việc vào ở ngay.\nMặt tiền rộng 8m, đường 7,5m, phù hợp cho kinh doanh hoặc để ở. Không gian thoáng đãng, rất thích hợp cho phong thủy.\n\nTiện ích xung quanh: gần bệnh viện mắt Sài Gòn Sông Hàn, bệnh viện đa khoa Ngũ Hành Sơn và công viên Cổ Cò, công viên Đầm",
+      "business_days": [],
+      "category": 1020,
+      "category_name": "Nhà ở",
+      "company_ad": true,
+      "contain_videos": 2,
+      "cta_buttons": [],
+      "date": "5 phút trước",
+      "direction": 8,
+      "fee_type": [],
+      "floors": 2,
+      "full_name": "Dương Phong",
+      "house_type": 1,
+      "image": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+      "image_thumbnails": [
+        {
+          "image": "https://cdn.chotot.com/5F-joZSIVIMvBV0qEvMOwjA-X-Dud7DZSoUXJJNp7Og/preset:view/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+          "thumbnail": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/HrNtSBZwSUhB3izE4dNfoHJwz-JkYgDcQKnBJhEb9Sk/preset:view/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg",
+          "thumbnail": "https://cdn.chotot.com/JG8tjMBoohWL3ubemfsHcIRbILJ-k551yqEPTbDyaYM/preset:listing/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/vlZ-a2xAwnsOSRJSboMtWnsDyDqzJiiWJZLkiY074Gk/preset:view/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg",
+          "thumbnail": "https://cdn.chotot.com/uXk3Skdam49M9wWSRowBfrEFUtbjf0S6xtiueh1Rc2M/preset:listing/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg"
+        }
+      ],
+      "images": [
+        "https://cdn.chotot.com/5F-joZSIVIMvBV0qEvMOwjA-X-Dud7DZSoUXJJNp7Og/preset:view/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+        "https://cdn.chotot.com/HrNtSBZwSUhB3izE4dNfoHJwz-JkYgDcQKnBJhEb9Sk/preset:view/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg",
+        "https://cdn.chotot.com/vlZ-a2xAwnsOSRJSboMtWnsDyDqzJiiWJZLkiY074Gk/preset:view/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg"
+      ],
+      "inspection_images": [],
+      "is_block_similar_ads_other_agent": true,
+      "is_sticky": false,
+      "is_zalo_show": true,
+      "job_tier": 0,
+      "label_campaigns": [],
+      "latitude": 15.986558,
+      "length": 16.2,
+      "list_id": 132592579,
+      "list_time": 1780044363000,
+      "living_size": 164.6999,
+      "location": "15.986558,108.2674092",
+      "longitude": 108.26741,
+      "number_of_images": 3,
+      "params": [
+        {
+          "id": "direction",
+          "label": "Hướng cửa chính",
+          "value": "Hướng Tây Nam"
+        }
+      ],
+      "price": 14000000000,
+      "price_million_per_m2": 100,
+      "price_string": "14 tỷ",
+      "property_legal_document": 1,
+      "protection_entitlement": false,
+      "pty_characteristics": [],
+      "pty_jupiter": 0,
+      "pty_map": "https://cdn.chotot.com/admincentre/location/15x987358_108x268209_c.jpg",
+      "pty_map_modifier": 0.0008,
+      "pty_map_v2": "https://cdn.chotot.com/admincentre/location/15x987358_108x268209_c_v2.jpg",
+      "pty_project_name": "",
+      "region": 3,
+      "region_name": "Đà Nẵng",
+      "region_name_v3": "TP Đà Nẵng",
+      "region_v2": 3017,
+      "rooms": 3,
+      "seller_info": {
+        "avatar": "https://cdn.chotot.com/uac2/30076312",
+        "full_name": "Dương Phong",
+        "live_ads": 5,
+        "sold_ads": 1
+      },
+      "shop": {
+        "address": "Phường Hòa Hiệp Nam, Quận Liên Chiểu, Đà Nẵng",
+        "alias": "N2tdEUNkrtyXbV2",
+        "createdDate": "1779682274",
+        "modifiedDate": 1779719419,
+        "name": "Dương Phong",
+        "profileImageUrl": "https://cdn.chotot.com/uac2/30076312",
+        "service_type": "membership",
+        "shopsCategoriesRelationships": [
+          {
+            "categoryId": 1000
+          }
+        ],
+        "status": "accepted",
+        "urls": [
+          {
+            "url": "duong-phong"
+          }
+        ]
+      },
+      "shop_alias": "N2tdEUNkrtyXbV2",
+      "size": 140,
+      "size_unit_string": "m²",
+      "sold_ads": 1,
+      "special_display": true,
+      "special_display_images": [
+        "https://cdn.chotot.com/HrNtSBZwSUhB3izE4dNfoHJwz-JkYgDcQKnBJhEb9Sk/preset:view/plain/0c964bd632badfcf5991e9e18e3274c8-2985826362436515019.jpg",
+        "https://cdn.chotot.com/vlZ-a2xAwnsOSRJSboMtWnsDyDqzJiiWJZLkiY074Gk/preset:view/plain/c2465f534872a0b3d6c80c59f67ebbe3-2985826362383925055.jpg"
+      ],
+      "specific_service_offered": [],
+      "state": "accepted",
+      "status": "active",
+      "sticky_ad_platinum": 0,
+      "stickyad_feature": "special_display",
+      "street_name": "Trần Xuân Hoà",
+      "street_number": "29",
+      "subject": "Bán nhà đẹp 2 mặt tiền ngang 8 Trần Xuân Hoà",
+      "thumbnail_image": "https://cdn.chotot.com/hcDgmc80ocbYCtJBZL8aFUsKMqEM_GGYLSVp33nV2Vk/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.jpg",
+      "type": "s",
+      "videos": [],
+      "ward": 6892,
+      "ward_name": "Phường Hoà Hải",
+      "ward_name_v3": "Phường Ngũ Hành Sơn",
+      "webp_image": "https://cdn.chotot.com/QNXJa5KOQKZ2OxmLq8Lvd7ubVR3eg45nRrqLRTyJZz4/preset:listing/plain/4d93dcfc28e5203205d84e52778b08fc-2985826362235425884.webp",
+      "width": 8
+    },
+    {
+      "account_id": 9394335,
+      "account_name": "Thu",
+      "account_oid": "b37c2787a29b21f7bade882917adc490",
+      "ad_features": [],
+      "ad_id": 176393871,
+      "ad_labels": [],
+      "area": 17,
+      "area_name": "Quận Thanh Khê",
+      "area_v2": 301702,
+      "avatar": "https://cdn.chotot.com/uac2/9394335",
+      "body": "BÁN NHÀ 2 MẶT KIỆT TRUNG TÂM THÀNH PHỐ – CÁCH BIỂN CHỈ 100M 🌊\n\nCơ hội sở hữu ngôi nhà vị trí đẹp tại đường Tôn Thất Đạm, khu dân cư an ninh, thuận tiện an cư lâu dài hoặc đầu tư cho thuê.\n\n✨ Thông tin nổi bật:\n▪️ Nhà 2 mặt kiệt rộng 3m, thông thoáng, dễ di chuyển\n▪️ Kết cấu 2 tầng + tầng thượng kiên cố, công năng đầy đủ\n▪️ Diện tích: 50,1m²\n▪️ Hướng Tây\n\n🏠 Công năng sử dụng gồm:\n✔️ 1 phòng khách rộng rãi\n✔️ 1 bếp tiện nghi\n✔️ 2 phòng ngủ thoáng mát\n✔️ 2 phòng vệ sinh\n✔️ 1 phòng thờ riêng biệt\n✔️ 1 sân thượng thư giãn, trồng cây, ngắm cảnh\n\n📍 Vị trí vàng:\n✅ Chỉ cách biển Nguyễn Tất Thành khoảng 100m – đi bộ vài phút ra biển\n✅ Ngay trung tâm thành phố\n✅ Gần trường học, bệnh viện, chợ, đầy đủ tiện ích xung quanh\n\n💰 Phù hợp cho gia đình trẻ, người muốn sống gần biển hoặc đầu tư sinh lời.\n\n📞 Liên hệ chính chủ để xem nhà và thương lượng giá tốt!",
+      "business_days": [],
+      "category": 1020,
+      "category_name": "Nhà ở",
+      "contain_videos": 2,
+      "cta_buttons": [],
+      "date": "6 phút trước",
+      "direction": 2,
+      "fee_type": [],
+      "floors": 3,
+      "full_name": "Thu",
+      "house_type": 3,
+      "image": "https://cdn.chotot.com/LyXc_iTIKVjVVYBPinltE6FaRIPGwNaKD6TXzuXDA5c/preset:listing/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.jpg",
+      "image_thumbnails": [
+        {
+          "image": "https://cdn.chotot.com/XxKaBkaHHgHbu1BAC381CxCBlUZFjnHxxcTJ-unRm5M/preset:view/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.jpg",
+          "thumbnail": "https://cdn.chotot.com/LyXc_iTIKVjVVYBPinltE6FaRIPGwNaKD6TXzuXDA5c/preset:listing/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/_O6IV1RIX8gNEWwE9g2T7KgJxd0GQG9Dqgp1BPpIx5g/preset:view/plain/417dc4c4f3f47fd4101667b764c98b7d-2986291833051407309.jpg",
+          "thumbnail": "https://cdn.chotot.com/oWBh89z4Pljma6Y2dw4UXL-J64NdpuUEULua6ZFCTr0/preset:listing/plain/417dc4c4f3f47fd4101667b764c98b7d-2986291833051407309.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/x6YO-GnF1KbG_XCXsCam_Ox0bODER0SP6l-nrbS9d3Q/preset:view/plain/8c9d45ab360730f6033f7364d862e388-2986291833074459475.jpg",
+          "thumbnail": "https://cdn.chotot.com/WASwSKAqdKI_I60s7p7seD7BUVF8BzKCfAk7I6SXhIM/preset:listing/plain/8c9d45ab360730f6033f7364d862e388-2986291833074459475.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/wLy5RYT4DJq51VfaLt736dQeNfNZsVfPxpYK1p3HxWk/preset:view/plain/dc981c8414f2e5fcc91891e327c01f2e-2986291833137107993.jpg",
+          "thumbnail": "https://cdn.chotot.com/MyMTU8v_Vc88KUS0VeYWONpGZ-akfSLE0BpamQMPAIo/preset:listing/plain/dc981c8414f2e5fcc91891e327c01f2e-2986291833137107993.jpg"
+        }
+      ],
+      "images": [
+        "https://cdn.chotot.com/XxKaBkaHHgHbu1BAC381CxCBlUZFjnHxxcTJ-unRm5M/preset:view/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.jpg",
+        "https://cdn.chotot.com/_O6IV1RIX8gNEWwE9g2T7KgJxd0GQG9Dqgp1BPpIx5g/preset:view/plain/417dc4c4f3f47fd4101667b764c98b7d-2986291833051407309.jpg",
+        "https://cdn.chotot.com/x6YO-GnF1KbG_XCXsCam_Ox0bODER0SP6l-nrbS9d3Q/preset:view/plain/8c9d45ab360730f6033f7364d862e388-2986291833074459475.jpg",
+        "https://cdn.chotot.com/wLy5RYT4DJq51VfaLt736dQeNfNZsVfPxpYK1p3HxWk/preset:view/plain/dc981c8414f2e5fcc91891e327c01f2e-2986291833137107993.jpg",
+        "https://cdn.chotot.com/GQjksWnGjMo4j4W6P-Cc56fBGpW_vCMciXXRebt0uY0/preset:view/plain/cbd8b404e40199932649ac6cb1b4b843-2986291833631765707.jpg"
+      ],
+      "inspection_images": [],
+      "is_block_similar_ads_other_agent": true,
+      "is_shop_verified": false,
+      "is_sticky": true,
+      "is_zalo_show": true,
+      "job_tier": 0,
+      "label_campaigns": [],
+      "latitude": 16.070599,
+      "length": 9,
+      "list_id": 132657370,
+      "list_time": 1780044302000,
+      "location": "16.0705977,108.1947536",
+      "longitude": 108.194756,
+      "number_of_images": 5,
+      "params": [
+        {
+          "id": "direction",
+          "label": "Hướng cửa chính",
+          "value": "Hướng Tây"
+        }
+      ],
+      "price": 4250000000,
+      "price_million_per_m2": 85,
+      "price_string": "4,25 tỷ",
+      "property_legal_document": 1,
+      "protection_entitlement": false,
+      "pty_characteristics": [
+        3
+      ],
+      "pty_jupiter": 0,
+      "pty_map": "https://cdn.chotot.com/admincentre/location/16x071398_108x195554_c.jpg",
+      "pty_map_modifier": 0.0008,
+      "pty_map_v2": "https://cdn.chotot.com/admincentre/location/16x071398_108x195554_c_v2.jpg",
+      "pty_project_name": "",
+      "region": 3,
+      "region_name": "Đà Nẵng",
+      "region_name_v3": "TP Đà Nẵng",
+      "region_v2": 3017,
+      "rooms": 2,
+      "seller_info": {
+        "avatar": "https://cdn.chotot.com/uac2/9394335",
+        "full_name": "Thu",
+        "live_ads": 1,
+        "sold_ads": 8
+      },
+      "size": 50,
+      "size_unit_string": "m²",
+      "sold_ads": 8,
+      "special_display": true,
+      "special_display_images": [
+        "https://cdn.chotot.com/_O6IV1RIX8gNEWwE9g2T7KgJxd0GQG9Dqgp1BPpIx5g/preset:view/plain/417dc4c4f3f47fd4101667b764c98b7d-2986291833051407309.jpg",
+        "https://cdn.chotot.com/x6YO-GnF1KbG_XCXsCam_Ox0bODER0SP6l-nrbS9d3Q/preset:view/plain/8c9d45ab360730f6033f7364d862e388-2986291833074459475.jpg",
+        "https://cdn.chotot.com/wLy5RYT4DJq51VfaLt736dQeNfNZsVfPxpYK1p3HxWk/preset:view/plain/dc981c8414f2e5fcc91891e327c01f2e-2986291833137107993.jpg",
+        "https://cdn.chotot.com/GQjksWnGjMo4j4W6P-Cc56fBGpW_vCMciXXRebt0uY0/preset:view/plain/cbd8b404e40199932649ac6cb1b4b843-2986291833631765707.jpg"
+      ],
+      "specific_service_offered": [],
+      "state": "accepted",
+      "status": "active",
+      "sticky_ad_platinum": 0,
+      "sticky_ad_type": "default",
+      "stickyad_feature": "special_display",
+      "street_name": "Kiệt đường Tôn Thất Đạm",
+      "streetnumber_display": 0,
+      "subject": "BÁN NHÀ 2 MẶT KIỆT ĐƯỜNG TÔN THẤT ĐẠM TT TP – CÁCH BIỂN CHỈ 100M",
+      "thumbnail_image": "https://cdn.chotot.com/LyXc_iTIKVjVVYBPinltE6FaRIPGwNaKD6TXzuXDA5c/preset:listing/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.jpg",
+      "toilets": 2,
+      "type": "s",
+      "videos": [],
+      "ward": 6862,
+      "ward_name": "Phường Xuân Hà",
+      "ward_name_v3": "Phường Thanh Khê",
+      "webp_image": "https://cdn.chotot.com/WT8za43ApcmzUiD5yx-Okan7eejkGwa2csf7F2dNpL8/preset:listing/plain/7b0c20e30b675e4eb2a86276722968e6-2986291832851236026.webp",
+      "width": 5
+    },
+    {
+      "account_id": 31480576,
+      "account_name": "Tân Có Nhà",
+      "account_oid": "d585834a40bcc46988e6d203008851f3",
+      "ad_features": [],
+      "ad_id": 176373836,
+      "ad_labels": [],
+      "area": 17,
+      "area_name": "Quận Cẩm Lệ",
+      "area_v2": 301706,
+      "avatar": "https://cdn.chotot.com/uac2/31480576",
+      "body": " BIỆT THỰ BÀU CẦU – 220m² – MT 10M \n\n📍 Gần Honda Tiến Thu – Phạm Hùng, khu dân cư đẹp, an ninh 🌿\n\n🔶 Diện tích: 220m² – 10m x 22m\n🔶 Kết cấu: Biệt thự 2 tầng – 3PN 🏡\n🔶 Sân vườn rộng – không gian thoáng\n\n✨ Nhà 1 đời chủ, chưa qua đầu tư – pháp lý rõ\n\n💰 Giá: 14 tỷ (thương lượng)\n\n👉 Phù hợp: Ở đẳng cấp hoặc giữ tài sản lâu dài 📈\n\n#BietThuBauCau #NhaDepDaNang #BatDongSanDaNang",
+      "business_days": [],
+      "category": 1020,
+      "category_name": "Nhà ở",
+      "company_ad": true,
+      "contain_videos": 1,
+      "cta_buttons": [],
+      "date": "8 phút trước",
+      "fee_type": [],
+      "floors": 2,
+      "full_name": "Tân Có Nhà",
+      "furnishing_sell": 2,
+      "has_video": true,
+      "house_type": 2,
+      "image": "https://cdn.chotot.com/qs5qNrp7q_Np5zvWYiTXfecyqb8N4Ua_zVA3xGEGuqM/preset:listing/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.jpg",
+      "image_thumbnails": [
+        {
+          "image": "https://cdn.chotot.com/YuqhTGlgvvKkegr6cnAKcFOeQVeNOUbY9HfnYK2yhF8/preset:view/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.jpg",
+          "thumbnail": "https://cdn.chotot.com/qs5qNrp7q_Np5zvWYiTXfecyqb8N4Ua_zVA3xGEGuqM/preset:listing/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/nko5ok00FpU2lYWYkdNheLSRBE5819-tWMR_XUpRrBw/preset:view/plain/c4622f509895e67a1cc8d76b9de3f627-2986166459382965977.jpg",
+          "thumbnail": "https://cdn.chotot.com/MWOeDHECSuq6dRizfIDBsa18A4Nr3fYf8UmooLyYdkQ/preset:listing/plain/c4622f509895e67a1cc8d76b9de3f627-2986166459382965977.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/aWrP6S7p7o_X1kstuv-Q74SkqpRW3vplo9VV504ZlwU/preset:view/plain/d8f34fa47f00b8d17c4e67d5320d2b5d-2986166461497026265.jpg",
+          "thumbnail": "https://cdn.chotot.com/UTGArb5AfsNnqRf0glB8sAZPsnG0wVioa8xNkbV_SE4/preset:listing/plain/d8f34fa47f00b8d17c4e67d5320d2b5d-2986166461497026265.jpg"
+        },
+        {
+          "image": "https://cdn.chotot.com/uHVpK4qAvgzJlAa5vd9RwgOl-Boh0U5LPKXfJHqxtU8/preset:view/plain/b41af419a23bc79b205bcc8c756820f8-2986166461254691201.jpg",
+          "thumbnail": "https://cdn.chotot.com/ZxM9to5W_oyCduhzBdK0QFAFmASYUT8wMpWI-KMq3Rc/preset:listing/plain/b41af419a23bc79b205bcc8c756820f8-2986166461254691201.jpg"
+        }
+      ],
+      "images": [
+        "https://cdn.chotot.com/YuqhTGlgvvKkegr6cnAKcFOeQVeNOUbY9HfnYK2yhF8/preset:view/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.jpg",
+        "https://cdn.chotot.com/nko5ok00FpU2lYWYkdNheLSRBE5819-tWMR_XUpRrBw/preset:view/plain/c4622f509895e67a1cc8d76b9de3f627-2986166459382965977.jpg",
+        "https://cdn.chotot.com/aWrP6S7p7o_X1kstuv-Q74SkqpRW3vplo9VV504ZlwU/preset:view/plain/d8f34fa47f00b8d17c4e67d5320d2b5d-2986166461497026265.jpg",
+        "https://cdn.chotot.com/uHVpK4qAvgzJlAa5vd9RwgOl-Boh0U5LPKXfJHqxtU8/preset:view/plain/b41af419a23bc79b205bcc8c756820f8-2986166461254691201.jpg",
+        "https://cdn.chotot.com/w5uTb2o95H9iEfj4WXIla6eMC2jIgj8rDfJRKO67ykI/preset:view/plain/1664724f2edfa94ddcc1cb617331d112-2986166463407301459.jpg",
+        "https://cdn.chotot.com/4VP3F7gZJRGO9b0Kkkrdemjcc4Cbp0s4vWMRNYcxFrI/preset:view/plain/6a29a8f7a485313f2a698a73e8272d5f-2986166463399556299.jpg"
+      ],
+      "inspection_images": [],
+      "is_block_similar_ads_other_agent": true,
+      "is_shop_verified": false,
+      "is_sticky": false,
+      "is_zalo_show": true,
+      "job_tier": 0,
+      "label_campaigns": [],
+      "latitude": 16.001999,
+      "length": 22,
+      "list_id": 132640233,
+      "list_time": 1780044181000,
+      "location": "16.0019983,108.2199588",
+      "longitude": 108.219955,
+      "number_of_images": 6,
+      "orig_list_time": 1779894296000,
+      "params": [],
+      "price": 14000000000,
+      "price_million_per_m2": 63.636364,
+      "price_string": "14 tỷ",
+      "property_legal_document": 1,
+      "protection_entitlement": false,
+      "pty_characteristics": [],
+      "pty_jupiter": 0,
+      "pty_map": "https://cdn.chotot.com/admincentre/location/16x002798_108x220759_c.jpg",
+      "pty_map_modifier": 0.0008,
+      "pty_map_v2": "https://cdn.chotot.com/admincentre/location/16x002798_108x220759_c_v2.jpg",
+      "pty_project_name": "",
+      "region": 3,
+      "region_name": "Đà Nẵng",
+      "region_name_v3": "TP Đà Nẵng",
+      "region_v2": 3017,
+      "rooms": 3,
+      "seller_info": {
+        "avatar": "https://cdn.chotot.com/uac2/31480576",
+        "full_name": "Tân Có Nhà",
+        "live_ads": 16
+      },
+      "shop": {
+        "alias": "MQtVbu8CMekzf19",
+        "createdDate": "1779889919",
+        "modifiedDate": 1779892612,
+        "name": "Tân Có Nhà",
+        "profileImageUrl": "https://cdn.chotot.com/uac2/31480576",
+        "service_type": "membership",
+        "shopsCategoriesRelationships": [
+          {
+            "categoryId": 1000
+          }
+        ],
+        "status": "accepted",
+        "urls": [
+          {
+            "url": "tan-co-nha"
+          }
+        ]
+      },
+      "shop_alias": "MQtVbu8CMekzf19",
+      "size": 220,
+      "size_unit_string": "m²",
+      "special_display": true,
+      "special_display_images": [
+        "https://cdn.chotot.com/nko5ok00FpU2lYWYkdNheLSRBE5819-tWMR_XUpRrBw/preset:view/plain/c4622f509895e67a1cc8d76b9de3f627-2986166459382965977.jpg",
+        "https://cdn.chotot.com/aWrP6S7p7o_X1kstuv-Q74SkqpRW3vplo9VV504ZlwU/preset:view/plain/d8f34fa47f00b8d17c4e67d5320d2b5d-2986166461497026265.jpg",
+        "https://cdn.chotot.com/uHVpK4qAvgzJlAa5vd9RwgOl-Boh0U5LPKXfJHqxtU8/preset:view/plain/b41af419a23bc79b205bcc8c756820f8-2986166461254691201.jpg",
+        "https://cdn.chotot.com/w5uTb2o95H9iEfj4WXIla6eMC2jIgj8rDfJRKO67ykI/preset:view/plain/1664724f2edfa94ddcc1cb617331d112-2986166463407301459.jpg",
+        "https://cdn.chotot.com/4VP3F7gZJRGO9b0Kkkrdemjcc4Cbp0s4vWMRNYcxFrI/preset:view/plain/6a29a8f7a485313f2a698a73e8272d5f-2986166463399556299.jpg"
+      ],
+      "specific_service_offered": [],
+      "state": "accepted",
+      "status": "active",
+      "sticky_ad_platinum": 0,
+      "stickyad_feature": "special_display",
+      "street_name": "Bàu Cầu",
+      "streetnumber_display": 0,
+      "subject": "✳️ Biệt Thự sân vườn 220m² mặt tiền 10m gần Phạm Hùng",
+      "thumbnail_image": "https://cdn.chotot.com/qs5qNrp7q_Np5zvWYiTXfecyqb8N4Ua_zVA3xGEGuqM/preset:listing/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.jpg",
+      "toilets": 3,
+      "type": "s",
+      "videos": [
+        {
+          "gif_url": "https://videodelivery.net/76b3a96fbfae346bdb67e23a6a3d4e87/thumbnails/thumbnail.gif?width=144&height=216&duration=3s&fps=15&fit=crop",
+          "id": "76b3a96fbfae346bdb67e23a6a3d4e87",
+          "thumbnail": "https://videodelivery.net/76b3a96fbfae346bdb67e23a6a3d4e87/thumbnails/thumbnail.jpg",
+          "url": "https://videodelivery.net/76b3a96fbfae346bdb67e23a6a3d4e87/manifest/video.m3u8"
+        }
+      ],
+      "ward": 6898,
+      "ward_name": "Phường Hòa Xuân",
+      "ward_name_v3": "Phường Hòa Xuân",
+      "webp_image": "https://cdn.chotot.com/YyrtFzt4Yl3wSsWLMi7eMU1sFVF2KKrdrjqIf1mpIvI/preset:listing/plain/9da9584b21b8856af323b1a3a6c290af-2986166459238675659.webp",
+      "width": 10
+    }
+  ],
+  "total": 1946
+}

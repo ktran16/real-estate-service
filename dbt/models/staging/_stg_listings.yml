@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_listings
+    description: >
+      Deduplicated listings — latest scraped row per (listing_id, source).
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+      - name: source
+        tests:
+          - not_null
+      - name: transaction_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["sale", "rent"]
+      - name: property_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["apartment", "house", "office", "land", "room", "other"]
