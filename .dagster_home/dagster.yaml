@@ -1,0 +1,6 @@
+# DAGSTER_HOME config for the Da Nang real estate orchestration.
+# Point DAGSTER_HOME at this directory so run history + schedule state persist:
+#   export DAGSTER_HOME="$(pwd)/.dagster_home"
+# Storage defaults to SQLite inside this dir, which is fine for a single-node setup.
+telemetry:
+  enabled: false

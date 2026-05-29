@@ -33,7 +33,16 @@ DuckDB allows only one writer and does not allow a writer while another process 
 the file open. While this Metabase container is running it keeps `danang.duckdb` open
 (read-only), which **blocks the scrape/transform pipeline from writing it**.
 
-Recommended workflow for refreshing data:
+Recommended workflow for refreshing data — use the wrapper, which bounces Metabase
+automatically (stop → pipeline → start, only restarting if it was running):
+
+```bash
+../scripts/refresh.sh                 # run-all --type all --limit 100
+SCRAPE_LIMIT=250 ../scripts/refresh.sh
+WITH_RESCRAPE=1 ../scripts/refresh.sh # also recheck active listings (offline + price)
+```
+
+Or manually:
 
 ```bash
 cd metabase && docker compose stop metabase     # release the file lock
@@ -43,6 +52,14 @@ cd metabase && docker compose start metabase     # serve fresh data
 
 Metabase keeps all your dashboards/questions (they live in `./metabase-data`, not in
 the DuckDB file), so stop/start is cheap and lossless.
+
+### Scheduled refresh (Dagster)
+
+Re-running the pipeline is the price-tracking loop (`detect_price_changes` appends to
+`listing_price_history`, which feeds the `price_changes` mart). Orchestration is handled by
+**Dagster** (`daily_refresh` job + 03:00 Asia/Ho_Chi_Minh schedule) — see
+[`../ORCHESTRATION.md`](../ORCHESTRATION.md). The job stops this Metabase
+container for the duration of the run and restarts it afterwards (even on failure).
 
 If you want Metabase always-on with concurrent refreshes, the clean upgrade is to serve
 from Postgres instead of DuckDB (pipeline writes marts to Postgres, Metabase reads it) —

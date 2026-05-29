@@ -38,3 +38,16 @@ metabase/metabase-data/
 
 # Session handoff notes (local working state, not source)
 HANDOFF.md
+
+# Scheduled-refresh runtime artifacts
+logs/
+.refresh.lock
+
+# Dagster runtime state (keep dagster.yaml, ignore the SQLite storage/run history)
+.dagster_home/*
+!.dagster_home/dagster.yaml
+.tmp_dagster_home*/
+
+# Claude Code local runtime state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
