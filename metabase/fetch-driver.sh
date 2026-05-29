@@ -8,8 +8,19 @@ VERSION="1.5.3.0"
 JAR="duckdb.metabase-driver.jar"
 URL="https://github.com/MotherDuck-Open-Source/metabase_duckdb_driver/releases/download/${VERSION}/${JAR}"
 
-DIR="$(cd "$(dirname "$0")" && pwd)/plugins"
+BASE="$(cd "$(dirname "$0")" && pwd)"
+DIR="${BASE}/plugins"
 mkdir -p "$DIR"
+
+# Pre-create the dirs the container bind-mounts and make them world-writable.
+# The Metabase java process runs as uid 2000 ("metabase") and MUST be able to
+# write to BOTH dirs: it scans/extracts driver jars in the plugins dir and
+# writes its H2 app DB to metabase-data. If Docker creates these dirs itself
+# (root-owned) or they're owned by another uid without the write bit, Metabase
+# silently falls back to /tmp and never loads the DuckDB jar — the driver then
+# never appears in the engine list. 0777 keeps it working regardless of uid.
+mkdir -p "${BASE}/metabase-data"
+chmod 0777 "$DIR" "${BASE}/metabase-data"
 
 echo "Downloading DuckDB driver ${VERSION} -> ${DIR}/${JAR}"
 curl -fL -o "${DIR}/${JAR}" "$URL"

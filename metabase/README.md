@@ -17,12 +17,12 @@ release built for that Metabase major version).
 
 ```bash
 cd metabase
-./fetch-driver.sh                 # downloads the driver jar into ./plugins
-docker compose up -d              # starts Metabase on http://localhost:3000
+./fetch-driver.sh                 # downloads the driver jar + sets dir perms (see Troubleshooting)
+docker compose up -d              # starts Metabase on http://localhost:3001
 ```
 
 Then in the browser:
-1. Open http://localhost:3000 and create the admin account.
+1. Open http://localhost:3001 and create the admin account.
 2. Add database → **DuckDB** → Database file = `/data/danang.duckdb` → save.
    (That's the in-container path; it's mounted read-only from `../data/danang.duckdb`.)
 3. Build the dashboards (see below) on the mart tables.
@@ -57,9 +57,32 @@ ask and we can add that.
 - **Trend Analysis** — `price_trend` (weekly median price/district line chart, volume),
   `price_changes` (re-scrape price-change alerts).
 
+## Troubleshooting
+
+**DuckDB is not in the "Add database" engine list.** The driver jar is present in
+`plugins/` but Metabase never loaded it. The Metabase java process runs as **uid 2000**
+(`metabase`) and must be able to *write* to both `plugins/` and `metabase-data/` — it
+scans/extracts driver jars in the plugins dir and writes its H2 app DB to `metabase-data`.
+If either dir is owned by another uid (e.g. Docker auto-creates `metabase-data` as root)
+without the write bit, Metabase logs `cannot use the plugins directory`, silently falls
+back to `/tmp`, and only loads its built-in drivers — so `duckdb` never appears.
+
+`fetch-driver.sh` now `chmod 0777`s both dirs to prevent this. To fix an already-running
+container without re-running the script:
+
+```bash
+docker exec -u root danang-metabase chmod 777 /plugins /metabase-data
+docker compose restart
+# verify the driver registered (expect: duckdb present: True):
+curl -s localhost:3001/api/session/properties | python3 -c 'import sys,json; e=json.load(sys.stdin)["engines"]; print("duckdb present:", "duckdb" in e)'
+```
+
+Also check the logs: `docker compose logs | grep -i "Loading plugins in"` should say
+`/plugins`, not `/tmp`.
+
 ## Files
 
 - `docker-compose.yml` — the Metabase service (driver + read-only data mount + persistence).
-- `fetch-driver.sh` — downloads the pinned DuckDB driver jar.
+- `fetch-driver.sh` — downloads the pinned DuckDB driver jar + sets writable dir perms.
 - `plugins/` — driver jar lives here (gitignored).
 - `metabase-data/` — Metabase app state, dashboards, users (gitignored).

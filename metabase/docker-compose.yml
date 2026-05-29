@@ -7,10 +7,11 @@
 services:
   metabase:
     # Must be a Metabase 59.x image to match the duckdb driver release 1.5.3.0.
-    image: metabase/metabase:v0.59.0
+    image: metabase/metabase:v0.59.12
     container_name: danang-metabase
     ports:
-      - "3000:3000"
+      # Host 3001 -> container 3000 (host :3000 is used by another project).
+      - "3001:3000"
     volumes:
       # DuckDB driver jar (run ./fetch-driver.sh first).
       - ./plugins:/plugins

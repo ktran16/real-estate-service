@@ -35,3 +35,6 @@ dbt/logs/
 # Metabase (driver jar + app state are downloaded/generated, not source)
 metabase/plugins/
 metabase/metabase-data/
+
+# Session handoff notes (local working state, not source)
+HANDOFF.md
