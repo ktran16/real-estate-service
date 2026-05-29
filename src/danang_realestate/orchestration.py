@@ -1,20 +1,24 @@
 """Dagster orchestration for the Da Nang real estate pipeline.
 
-Replaces the old cron + scripts/refresh.sh approach. The pipeline writes the
-single-writer DuckDB file, so the Metabase container (which holds it open
-read-only) is stopped for the duration of the run and restarted afterwards —
-including on failure, via the `restart_metabase` failure hook.
+Architecture: DuckDB is the pipeline's working store (raw listings + dbt marts).
+A separate Postgres database holds a *serving copy* of the marts that Metabase reads
+(Metabase's built-in Postgres driver — no jar, always-on, concurrent with pipeline
+writes). Because Metabase never opens the DuckDB file, there is no single-writer
+stop/start dance: the job just scrapes → geocodes → builds marts → publishes to Postgres.
 
 Run locally (birdwatch already uses port 3000, so use another port):
 
     uv sync --extra dagster
     uv run dagster dev -m danang_realestate.orchestration -p 3070
 
-Then open http://localhost:3070 → the `daily_refresh` job runs scrape → geocode →
-dbt, bracketed by Metabase stop/start. The `daily_refresh_schedule` fires at 03:00
-Asia/Ho_Chi_Minh (needs the dagster daemon, which `dagster dev` runs).
+The `daily_refresh_schedule` fires at 03:00 Asia/Ho_Chi_Minh (needs the dagster daemon,
+which `dagster dev` runs). Marts are published to Postgres via DuckDB's native `postgres`
+extension (no extra Python dependency).
 
-Env overrides: SCRAPE_TYPE (all|sale|rent, default all), SCRAPE_LIMIT (int, default 100).
+Env overrides:
+  SCRAPE_TYPE (all|sale|rent, default all), SCRAPE_LIMIT (int, default 100)
+  PG_HOST (default localhost), PG_PORT (5432), PG_DB (danang), PG_USER (danang),
+  PG_PASSWORD (danang), PG_SCHEMA (public)
 """
 from __future__ import annotations
 
@@ -25,13 +29,11 @@ from pathlib import Path
 from dagster import (
     DefaultScheduleStatus,
     Definitions,
-    HookContext,
     In,
     Nothing,
     Out,
     RetryPolicy,
     ScheduleDefinition,
-    failure_hook,
     job,
     op,
 )
@@ -47,41 +49,24 @@ DBT_DIR = REPO_ROOT / "dbt"
 
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
-# Bounce Metabase by container name (not compose) so it works identically on the
-# host or inside a Dagster container with /var/run/docker.sock mounted.
-METABASE_CONTAINER = os.getenv("METABASE_CONTAINER", "danang-metabase")
 
-# Network ops can hit transient failures; give the scrape a couple of retries.
+# Postgres serving DB (the copy Metabase reads). Defaults suit host runs against the
+# container published on 5433; inside the Dagster container set PG_HOST=postgres PG_PORT=5432.
+PG_HOST = os.getenv("PG_HOST", "localhost")
+PG_PORT = os.getenv("PG_PORT", "5432")
+PG_DB = os.getenv("PG_DB", "danang")
+PG_USER = os.getenv("PG_USER", "danang")
+PG_PASSWORD = os.getenv("PG_PASSWORD", "danang")
+PG_SCHEMA = os.getenv("PG_SCHEMA", "public")
+
+# The dbt marts to publish to Postgres for Metabase to serve.
+MARTS = ["listings", "price_by_district", "price_trend", "price_changes", "broker_listings"]
+
+# Network/DB ops can hit transient failures; give them a couple of retries.
 _NET_RETRY = RetryPolicy(max_retries=2, delay=10)
 
 
-def _metabase(context, action: str) -> None:
-    """Best-effort `docker <action> <container>`. Never raises."""
-    try:
-        result = subprocess.run(
-            ["docker", action, METABASE_CONTAINER],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            context.log.info("Metabase: docker %s %s", action, METABASE_CONTAINER)
-        else:
-            # Container missing in this environment is fine — skip quietly.
-            msg = (result.stderr or "").strip() or "no such container"
-            context.log.info("Metabase %s skipped: %s", action, msg)
-    except FileNotFoundError:
-        context.log.warning("docker CLI not found; cannot %s Metabase.", action)
-
-
-@op(out=Out(Nothing))
-def stop_metabase(context) -> None:
-    """Release the single-writer DuckDB file so the pipeline can write it."""
-    context.log.info("Stopping Metabase to free the DuckDB file...")
-    _metabase(context, "stop")
-
-
-@op(out=Out(Nothing), ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
+@op(out=Out(Nothing), retry_policy=_NET_RETRY)
 def scrape_and_load(context) -> None:
     """Scrape nhatot listings and upsert them (records price history)."""
     init_db()
@@ -112,7 +97,7 @@ def geocode_listings(context) -> None:
 
 @op(out=Out(Nothing), ins={"start": In(Nothing)})
 def run_dbt(context) -> None:
-    """Rebuild the analytics marts via dbt."""
+    """Rebuild the analytics marts via dbt (in DuckDB)."""
     result = subprocess.run(
         ["uv", "run", "dbt", "run", "--profiles-dir", "."],
         cwd=str(DBT_DIR),
@@ -127,27 +112,48 @@ def run_dbt(context) -> None:
         raise RuntimeError(f"dbt run failed (exit {result.returncode})")
 
 
-@op(ins={"start": In(Nothing)})
-def start_metabase(context) -> None:
-    """Bring Metabase back up to serve the freshly-built marts."""
-    _metabase(context, "start")
+@op(ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
+def publish_to_postgres(context) -> None:
+    """Copy the dbt marts from DuckDB into the Postgres serving DB (what Metabase reads).
+
+    Uses DuckDB's native `postgres` extension to ATTACH Postgres and rewrite each mart
+    table, so Metabase serves a fresh copy without ever opening the DuckDB file.
+    """
+    conn = get_connection()
+    try:
+        conn.execute("INSTALL postgres; LOAD postgres;")
+        dsn = f"host={PG_HOST} port={PG_PORT} dbname={PG_DB} user={PG_USER} password={PG_PASSWORD}"
+        conn.execute(f"ATTACH '{dsn}' AS pg (TYPE postgres)")
+        try:
+            published = []
+            for mart in MARTS:
+                present = conn.execute(
+                    "SELECT count(*) FROM duckdb_tables() "
+                    "WHERE database_name = current_database() AND table_name = ?",
+                    [mart],
+                ).fetchone()[0]
+                if not present:
+                    context.log.info("Mart '%s' not found in DuckDB; skipping.", mart)
+                    continue
+                # CREATE OR REPLACE isn't supported on attached Postgres; drop + create.
+                conn.execute(f'DROP TABLE IF EXISTS pg.{PG_SCHEMA}."{mart}"')
+                conn.execute(f'CREATE TABLE pg.{PG_SCHEMA}."{mart}" AS SELECT * FROM "{mart}"')
+                n = conn.execute(f'SELECT count(*) FROM pg.{PG_SCHEMA}."{mart}"').fetchone()[0]
+                published.append(f"{mart}={n}")
+        finally:
+            conn.execute("DETACH pg")
+        context.log.info("Published marts to Postgres %s:%s → %s", PG_HOST, PG_PORT, ", ".join(published) or "(none)")
+    finally:
+        conn.close()
 
 
-@failure_hook
-def restart_metabase(context: HookContext) -> None:
-    """If any op fails, make sure Metabase is brought back up (best effort)."""
-    context.log.warning("Op '%s' failed; restarting Metabase.", context.op.name)
-    _metabase(context, "start")
-
-
-@job(hooks={restart_metabase})
+@job
 def daily_refresh():
-    """Full refresh: stop Metabase → scrape → geocode → dbt → start Metabase."""
-    stopped = stop_metabase()
-    scraped = scrape_and_load(start=stopped)
+    """Full refresh: scrape → geocode → dbt marts → publish to Postgres serving DB."""
+    scraped = scrape_and_load()
     geocoded = geocode_listings(start=scraped)
     transformed = run_dbt(start=geocoded)
-    start_metabase(start=transformed)
+    publish_to_postgres(start=transformed)
 
 
 daily_refresh_schedule = ScheduleDefinition(

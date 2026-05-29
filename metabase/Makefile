@@ -46,11 +46,9 @@ ps: ## Show container status
 
 status: ps ## Alias for ps
 
-health: ## Check the API health endpoint + whether the duckdb engine is registered
-	@printf "health: "; curl -s -o /dev/null -w "%{http_code}\n" $(URL)/api/health
-	@curl -s $(URL)/api/session/properties \
-		| python3 -c 'import sys,json; e=json.load(sys.stdin)["engines"]; print("duckdb engine present:", "duckdb" in e)' \
-		2>/dev/null || echo "duckdb engine present: (Metabase not ready yet)"
+health: ## Check the Metabase API health endpoint + Postgres serving DB
+	@printf "metabase health: "; curl -s -o /dev/null -w "%{http_code}\n" $(URL)/api/health
+	@printf "postgres: "; docker exec danang-postgres pg_isready -U danang -d danang 2>/dev/null || echo "not ready"
 
 fix-perms: ## Make plugins/ + metabase-data/ writable by the metabase user (uid 2000), then restart
 	docker exec -u root $(CONTAINER) chmod 777 /plugins /metabase-data

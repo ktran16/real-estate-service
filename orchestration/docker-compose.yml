@@ -8,9 +8,12 @@
 #   - Source code (danang_realestate.orchestration) is baked into the image; rebuild
 #     (`--build`) after editing it. dbt/ and data/ are bind-mounted so models + the
 #     DuckDB file are live and shared with the Metabase container.
-#   - /var/run/docker.sock is mounted so the job can `docker stop/start danang-metabase`
-#     (DuckDB is single-writer; Metabase must release the file during a run).
+#   - The job publishes marts into the Postgres serving DB (service `postgres` in the
+#     metabase stack, reached over the shared `danang-net` network). Metabase reads
+#     Postgres, so no Metabase stop/start is needed.
 #   - DAGSTER_HOME is a named volume shared by both services (run history + schedules).
+#
+# Prereq: `docker network create danang-net` (shared with the metabase stack).
 services:
   dagster-webserver:
     build:
@@ -25,13 +28,15 @@ services:
       DAGSTER_HOME: /opt/dagster_home
       SCRAPE_TYPE: ${SCRAPE_TYPE:-all}
       SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
-      METABASE_CONTAINER: danang-metabase
+      PG_HOST: postgres
+      PG_PORT: "5432"
     volumes:
       - ./workspace.yaml:/app/workspace.yaml:ro
       - ../dbt:/app/dbt
       - ../data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock
       - dagster_home:/opt/dagster_home
+    networks:
+      - danang-net
     restart: unless-stopped
 
   dagster-daemon:
@@ -44,14 +49,20 @@ services:
       DAGSTER_HOME: /opt/dagster_home
       SCRAPE_TYPE: ${SCRAPE_TYPE:-all}
       SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
-      METABASE_CONTAINER: danang-metabase
+      PG_HOST: postgres
+      PG_PORT: "5432"
     volumes:
       - ./workspace.yaml:/app/workspace.yaml:ro
       - ../dbt:/app/dbt
       - ../data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock
       - dagster_home:/opt/dagster_home
+    networks:
+      - danang-net
     restart: unless-stopped
 
 volumes:
   dagster_home:
+
+networks:
+  danang-net:
+    external: true

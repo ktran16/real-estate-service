@@ -1,28 +1,59 @@
-# Self-hosted Metabase for the Da Nang real estate marts.
+# Self-hosted Metabase + its Postgres serving database for the Da Nang marts.
 #
-# Reads the DuckDB file produced by the pipeline (read-only). See README.md for
-# the important DuckDB file-locking note: DuckDB is single-writer, so the scrape
-# pipeline cannot write data/danang.duckdb while this container holds it open.
-# Workflow: stop Metabase -> run pipeline -> start Metabase (see README).
+# Metabase reads the marts from Postgres (its built-in driver) — NOT from DuckDB.
+# The Dagster pipeline publishes the marts into this Postgres after each run, so
+# Metabase can stay up concurrently with pipeline writes (no single-writer dance).
+#
+# Run from this directory:
+#   docker network create danang-net   # once (shared with the orchestration stack)
+#   docker compose up -d
+# Then in Metabase: Add database → PostgreSQL → host=postgres port=5432
+#   db=danang user=danang password=danang.
 services:
+  postgres:
+    image: postgres:16
+    container_name: danang-postgres
+    environment:
+      POSTGRES_DB: danang
+      POSTGRES_USER: danang
+      POSTGRES_PASSWORD: danang
+    ports:
+      # Host 5433 -> container 5432, for host-based pipeline runs / psql.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U danang -d danang"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - danang-net
+    restart: unless-stopped
+
   metabase:
-    # Must be a Metabase 59.x image to match the duckdb driver release 1.5.3.0.
     image: metabase/metabase:v0.59.12
     container_name: danang-metabase
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       # Host 3001 -> container 3000 (host :3000 is used by another project).
       - "3001:3000"
     volumes:
-      # DuckDB driver jar (run ./fetch-driver.sh first).
-      - ./plugins:/plugins
-      # The analytics database, mounted read-only.
-      - ../data/danang.duckdb:/data/danang.duckdb:ro
       # Persist Metabase's own app state (questions, dashboards, users) across restarts.
       - ./metabase-data:/metabase-data
     environment:
-      MB_PLUGINS_DIR: /plugins
-      # Use an H2 app DB persisted on the mounted volume (fine for a single-user,
-      # personal deployment). Switch to Postgres for a production/multi-user setup.
+      # H2 app DB (Metabase's own metadata) — fine for a single-user deployment.
       MB_DB_TYPE: h2
       MB_DB_FILE: /metabase-data/metabase.db
+    networks:
+      - danang-net
     restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  danang-net:
+    external: true

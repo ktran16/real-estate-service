@@ -1,11 +1,10 @@
 # Image for the always-on Dagster webserver + daemon that orchestrate the
-# Da Nang real estate pipeline. Includes uv (to run the project + dbt) and the
-# docker CLI (the job bounces the Metabase container via the mounted docker.sock).
+# Da Nang real estate pipeline. Includes uv to run the project + dbt. The job
+# publishes marts to the Postgres serving DB via DuckDB's postgres extension.
 FROM python:3.12-slim
 
-# docker CLI (client only — talks to the host daemon via the mounted socket).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends docker.io ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # uv for dependency management / running the project + dbt.
