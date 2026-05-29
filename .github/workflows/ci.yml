@@ -19,8 +19,8 @@ jobs:
       - name: Set up Python
         run: uv python install 3.11
 
-      - name: Install dependencies (incl. dev group)
-        run: uv sync --dev
+      - name: Install dependencies (dev group + dagster extra)
+        run: uv sync --dev --extra dagster
 
       - name: Lint (ruff)
         run: uv run ruff check .
@@ -28,6 +28,12 @@ jobs:
       - name: Run tests (pytest)
         run: uv run pytest -q
 
-      - name: dbt parse (validate models & sources)
+      - name: Validate Dagster definitions
+        run: uv run dagster definitions validate -m danang_realestate.orchestration
+
+      - name: Initialize empty DuckDB schema
+        run: uv run python -c "from danang_realestate.db import init_db; init_db()"
+
+      - name: dbt build (run models + data tests on empty schema)
         working-directory: dbt
-        run: uv run dbt parse --profiles-dir .
+        run: uv run dbt build --profiles-dir .

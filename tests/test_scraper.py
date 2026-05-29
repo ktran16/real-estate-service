@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
 
+from danang_realestate.scrapers import get_scraper
+from danang_realestate.scrapers.batdongsan import BatDongSanScraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
 
 
@@ -66,6 +68,22 @@ class TestNhaTotScraper(unittest.TestCase):
         # Malformed ad is skipped, valid one kept.
         self.assertEqual(len(listings), 1)
         self.assertEqual(listings[0].listing_id, 1)
+
+
+class TestScraperRegistry(unittest.TestCase):
+    def test_get_scraper_nhatot(self):
+        self.assertIsInstance(get_scraper("nhatot"), NhaTotScraper)
+
+    def test_get_scraper_batdongsan(self):
+        self.assertIsInstance(get_scraper("batdongsan"), BatDongSanScraper)
+
+    def test_get_scraper_unknown_raises(self):
+        with self.assertRaises(ValueError):
+            get_scraper("does-not-exist")
+
+    def test_batdongsan_not_implemented(self):
+        with self.assertRaises(NotImplementedError):
+            BatDongSanScraper().scrape(transaction_type="sale", limit=1)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from rich.logging import RichHandler
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
+from danang_realestate.scrapers import get_scraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
 from danang_realestate.utils.http import SafeHTTPClient
 from danang_realestate.utils.timeutil import utcnow
@@ -30,17 +31,18 @@ app = typer.Typer(help="Da Nang Real Estate Analytics CLI")
 def scrape(
     type: str = typer.Option("all", help="Transaction type: sale, rent, or all"),
     limit: int = typer.Option(None, help="Maximum number of listings to scrape"),
-    region: str = typer.Option("danang", help="Region to scrape (currently only danang is supported)")
+    region: str = typer.Option("danang", help="Region to scrape (currently only danang is supported)"),
+    source: str = typer.Option("nhatot", help="Source to scrape: nhatot (batdongsan: not yet implemented)")
 ):
-    """Scrape listings from nhatot.com API and load into DuckDB."""
-    console.print(f"[bold green]Starting Scraper[/bold green] - Type: [bold]{type}[/bold], Limit: [bold]{limit}[/bold], Region: [bold]{region}[/bold]")
-    
+    """Scrape listings from a source and load into DuckDB."""
+    console.print(f"[bold green]Starting Scraper[/bold green] - Source: [bold]{source}[/bold], Type: [bold]{type}[/bold], Limit: [bold]{limit}[/bold], Region: [bold]{region}[/bold]")
+
     # Initialize database tables
     init_db()
-    
+
     client = SafeHTTPClient()
-    scraper = NhaTotScraper(client)
-    
+    scraper = get_scraper(source, client)
+
     try:
         listings = scraper.scrape(transaction_type=type, limit=limit)
         console.print(f"[green]Scraped {len(listings)} listings from nhatot.com.[/green]")
@@ -161,10 +163,11 @@ def geocode():
     init_db()
     
     conn = get_connection()
+    geocoder = Geocoder(conn)
     try:
-        geocoder = Geocoder(conn)
         geocoder.geocode_pending_listings()
     finally:
+        geocoder.close()
         conn.close()
 
 @app.command()
@@ -188,11 +191,12 @@ def transform():
 @app.command()
 def run_all(
     type: str = typer.Option("all", help="Transaction type: sale, rent, or all"),
-    limit: int = typer.Option(None, help="Maximum number of listings to scrape")
+    limit: int = typer.Option(None, help="Maximum number of listings to scrape"),
+    source: str = typer.Option("nhatot", help="Source to scrape: nhatot (batdongsan: not yet implemented)")
 ):
     """Full pipeline: scrape listings -> geocode -> transform."""
     console.print("[bold cyan]Executing full pipeline (Scrape -> Geocode -> Transform)...[/bold cyan]")
-    scrape(type=type, limit=limit, region="danang")
+    scrape(type=type, limit=limit, region="danang", source=source)
     geocode()
     try:
         transform()

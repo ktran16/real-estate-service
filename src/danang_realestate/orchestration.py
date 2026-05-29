@@ -41,12 +41,13 @@ from dagster import (
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
-from danang_realestate.scrapers.nhatot import NhaTotScraper
+from danang_realestate.scrapers import get_scraper
 from danang_realestate.utils.http import SafeHTTPClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DBT_DIR = REPO_ROOT / "dbt"
 
+SCRAPE_SOURCE = os.getenv("SCRAPE_SOURCE", "nhatot")
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
 
@@ -72,9 +73,12 @@ def scrape_and_load(context) -> None:
     init_db()
     client = SafeHTTPClient()
     try:
-        scraper = NhaTotScraper(client)
+        scraper = get_scraper(SCRAPE_SOURCE, client)
         listings = scraper.scrape(transaction_type=SCRAPE_TYPE, limit=SCRAPE_LIMIT)
-        context.log.info("Scraped %d listings (type=%s, limit=%s).", len(listings), SCRAPE_TYPE, SCRAPE_LIMIT)
+        context.log.info(
+            "Scraped %d listings (source=%s, type=%s, limit=%s).",
+            len(listings), SCRAPE_SOURCE, SCRAPE_TYPE, SCRAPE_LIMIT,
+        )
         conn = get_connection()
         try:
             load_listings(conn, listings)
@@ -89,9 +93,11 @@ def geocode_listings(context) -> None:
     """Geocode any listings missing coordinates (cache → Nominatim → centroid)."""
     init_db()
     conn = get_connection()
+    geocoder = Geocoder(conn)
     try:
-        Geocoder(conn).geocode_pending_listings()
+        geocoder.geocode_pending_listings()
     finally:
+        geocoder.close()
         conn.close()
 
 

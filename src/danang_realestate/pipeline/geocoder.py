@@ -7,15 +7,51 @@ from geopy.exc import GeocoderServiceError, GeocoderTimedOut
 from geopy.geocoders import Nominatim
 
 from danang_realestate.config import settings
+from danang_realestate.utils.http import SafeHTTPClient
 from danang_realestate.utils.timeutil import utcnow
 
 logger = logging.getLogger(__name__)
 
+GOONG_GEOCODE_URL = "https://rsapi.goong.io/Geocode"
+
 class Geocoder:
-    def __init__(self, conn: duckdb.DuckDBPyConnection):
+    def __init__(
+        self,
+        conn: duckdb.DuckDBPyConnection,
+        http_client: Optional[SafeHTTPClient] = None,
+    ):
         self.conn = conn
         self.geolocator = Nominatim(user_agent=settings.nominatim_user_agent, timeout=5.0)
+        self.goong_api_key = settings.goong_api_key
+        # Lazily created (only when a Goong key is configured); injectable for tests.
+        self._http = http_client
         self.last_query_time = 0.0
+
+    def _get_http(self) -> SafeHTTPClient:
+        if self._http is None:
+            self._http = SafeHTTPClient()
+        return self._http
+
+    def _geocode_goong(self, query_address: str) -> Tuple[Optional[float], Optional[float]]:
+        """Tier 3: Goong Maps (Vietnamese geocoder). Only used when a key is configured."""
+        if not self.goong_api_key:
+            return None, None
+        try:
+            data = self._get_http().get(
+                GOONG_GEOCODE_URL,
+                params={"address": query_address, "api_key": self.goong_api_key},
+            )
+            results = (data or {}).get("results") or []
+            if results:
+                loc = results[0].get("geometry", {}).get("location", {})
+                lat, lng = loc.get("lat"), loc.get("lng")
+                if lat is not None and lng is not None:
+                    logger.info(f"Goong resolved: {query_address} -> ({lat}, {lng})")
+                    return lat, lng
+            logger.warning(f"Goong could not resolve: {query_address}")
+        except Exception as e:
+            logger.warning(f"Goong lookup failed: {e}")
+        return None, None
 
     def _sleep_rate_limit(self):
         """Ensure at least 1.0 second between Nominatim requests."""
@@ -79,7 +115,14 @@ class Geocoder:
         except (GeocoderTimedOut, GeocoderServiceError) as e:
             logger.warning(f"Nominatim lookup timed out or failed: {e}")
 
-        # 3. Fallback to District Centroid if Nominatim fails
+        # 3. Tier 3: Goong Maps (only if configured and Nominatim failed)
+        if (lat is None or lng is None) and self.goong_api_key:
+            g_lat, g_lng = self._geocode_goong(query_address)
+            if g_lat is not None and g_lng is not None:
+                lat, lng = g_lat, g_lng
+                source = "goong"
+
+        # 4. Fallback to District Centroid if address geocoders fail
         if lat is None or lng is None:
             lat, lng = self.get_district_centroid(district)
             source = "district_centroid"
@@ -88,7 +131,7 @@ class Geocoder:
             else:
                 logger.warning(f"No fallback found for district '{district}'")
 
-        # 4. Save to Cache
+        # 5. Save to Cache
         try:
             self.conn.execute(
                 """
@@ -96,7 +139,7 @@ class Geocoder:
                     address_raw, lat, lng, geocoder_source, geocoded_at, confidence
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                [address_raw, lat, lng, source, utcnow(), 1.0 if source == "nominatim" else 0.0]
+                [address_raw, lat, lng, source, utcnow(), 1.0 if source in ("nominatim", "goong") else 0.0]
             )
         except Exception as e:
             logger.error(f"Error writing to geocode cache: {e}")
@@ -141,3 +184,9 @@ class Geocoder:
                     logger.error(f"Failed to update listing {lid} ({src}) coordinates: {e}")
                     
         logger.info(f"Successfully geocoded and updated {updated_count} listings.")
+
+    def close(self):
+        """Close the lazily-created HTTP client (used for Goong), if any."""
+        if self._http is not None:
+            self._http.close()
+            self._http = None

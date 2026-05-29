@@ -79,6 +79,37 @@ class TestGeocoder(unittest.TestCase):
         self.assertEqual(lng, 108.22)
         self.assertEqual(source, "nominatim")
 
+    def test_geocode_goong_tier(self):
+        # Nominatim fails; a Goong key + mocked Goong client resolves it.
+        self.geocoder.goong_api_key = "test-key"
+        mock_http = MagicMock()
+        mock_http.get.return_value = {
+            "results": [{"geometry": {"location": {"lat": 16.05, "lng": 108.21}}}]
+        }
+        self.geocoder._http = mock_http
+
+        lat, lng, source = self.geocoder.geocode("Goong-resolvable address", "Hải Châu")
+        self.assertEqual(lat, 16.05)
+        self.assertEqual(lng, 108.21)
+        self.assertEqual(source, "goong")
+        mock_http.get.assert_called_once()
+        # Cached with full confidence (address-level geocode, not centroid).
+        row = self.conn.execute(
+            "SELECT geocoder_source, confidence FROM geocode_cache WHERE address_raw = 'Goong-resolvable address'"
+        ).fetchone()
+        self.assertEqual(row[0], "goong")
+        self.assertEqual(row[1], 1.0)
+
+    def test_geocode_no_goong_without_key(self):
+        # Without a key, Goong is skipped entirely and we fall back to centroid.
+        self.geocoder.goong_api_key = ""  # hermetic: ignore any ambient .env key
+        mock_http = MagicMock()
+        self.geocoder._http = mock_http  # should never be used
+
+        lat, lng, source = self.geocoder.geocode("Some address", "Hải Châu")
+        self.assertEqual(source, "district_centroid")
+        mock_http.get.assert_not_called()
+
     def test_geocode_fallback_to_centroid(self):
         # Nominatim resolves nothing (mocked to None) -> district centroid fallback.
         lat, lng, source = self.geocoder.geocode("Unresolvable address", "Hải Châu")

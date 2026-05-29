@@ -10,12 +10,24 @@ models:
       - name: source
         tests:
           - not_null
+          - accepted_values:
+              arguments:
+                values: ["nhatot", "batdongsan", "mogi", "alonhadat"]
       - name: transaction_type
         tests:
+          - not_null
           - accepted_values:
               arguments:
                 values: ["sale", "rent"]
+      - name: property_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["apartment", "house", "office", "land", "room", "other"]
       - name: is_broker
+        tests:
+          - not_null
+      - name: is_active
         tests:
           - not_null
 
