@@ -43,33 +43,35 @@ from danang_realestate.scrapers.nhatot import NhaTotScraper
 from danang_realestate.utils.http import SafeHTTPClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-METABASE_DIR = REPO_ROOT / "metabase"
 DBT_DIR = REPO_ROOT / "dbt"
 
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
+# Bounce Metabase by container name (not compose) so it works identically on the
+# host or inside a Dagster container with /var/run/docker.sock mounted.
+METABASE_CONTAINER = os.getenv("METABASE_CONTAINER", "danang-metabase")
 
 # Network ops can hit transient failures; give the scrape a couple of retries.
 _NET_RETRY = RetryPolicy(max_retries=2, delay=10)
 
 
 def _metabase(context, action: str) -> None:
-    """Best-effort `docker compose <action>` in metabase/. Never raises."""
-    compose = METABASE_DIR / "docker-compose.yml"
-    if not compose.exists():
-        context.log.info("No metabase/docker-compose.yml; skipping '%s'.", action)
-        return
+    """Best-effort `docker <action> <container>`. Never raises."""
     try:
-        subprocess.run(
-            ["docker", "compose", action],
-            cwd=str(METABASE_DIR),
+        result = subprocess.run(
+            ["docker", action, METABASE_CONTAINER],
             check=False,
             capture_output=True,
             text=True,
         )
-        context.log.info("Metabase: docker compose %s", action)
+        if result.returncode == 0:
+            context.log.info("Metabase: docker %s %s", action, METABASE_CONTAINER)
+        else:
+            # Container missing in this environment is fine — skip quietly.
+            msg = (result.stderr or "").strip() or "no such container"
+            context.log.info("Metabase %s skipped: %s", action, msg)
     except FileNotFoundError:
-        context.log.warning("docker not found; cannot %s Metabase.", action)
+        context.log.warning("docker CLI not found; cannot %s Metabase.", action)
 
 
 @op(out=Out(Nothing))

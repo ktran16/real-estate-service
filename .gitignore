@@ -51,3 +51,4 @@ logs/
 # Claude Code local runtime state
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+.claude

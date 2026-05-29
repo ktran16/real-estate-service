@@ -1,0 +1,3 @@
+# Tells the Dagster webserver + daemon where to load the code location from.
+load_from:
+  - python_module: danang_realestate.orchestration

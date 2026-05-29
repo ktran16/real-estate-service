@@ -1,0 +1,57 @@
+# Always-on Dagster (webserver + daemon) for the Da Nang real estate pipeline.
+#
+# Run from this directory:  docker compose up -d --build
+# UI: http://localhost:3070  (host 3070 avoids the birdwatch-dagster stack on 3000)
+#
+# How the pieces fit:
+#   - Both services share the image built from ./Dockerfile (project + uv + docker CLI).
+#   - Source code (danang_realestate.orchestration) is baked into the image; rebuild
+#     (`--build`) after editing it. dbt/ and data/ are bind-mounted so models + the
+#     DuckDB file are live and shared with the Metabase container.
+#   - /var/run/docker.sock is mounted so the job can `docker stop/start danang-metabase`
+#     (DuckDB is single-writer; Metabase must release the file during a run).
+#   - DAGSTER_HOME is a named volume shared by both services (run history + schedules).
+services:
+  dagster-webserver:
+    build:
+      context: ..
+      dockerfile: orchestration/Dockerfile
+    image: danang-dagster:latest
+    container_name: danang-dagster-webserver
+    command: uv run dagster-webserver -h 0.0.0.0 -p 3000 -w /app/workspace.yaml
+    ports:
+      - "3070:3000"
+    environment:
+      DAGSTER_HOME: /opt/dagster_home
+      SCRAPE_TYPE: ${SCRAPE_TYPE:-all}
+      SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
+      METABASE_CONTAINER: danang-metabase
+    volumes:
+      - ./workspace.yaml:/app/workspace.yaml:ro
+      - ../dbt:/app/dbt
+      - ../data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dagster_home:/opt/dagster_home
+    restart: unless-stopped
+
+  dagster-daemon:
+    image: danang-dagster:latest
+    container_name: danang-dagster-daemon
+    command: uv run dagster-daemon run -w /app/workspace.yaml
+    depends_on:
+      - dagster-webserver
+    environment:
+      DAGSTER_HOME: /opt/dagster_home
+      SCRAPE_TYPE: ${SCRAPE_TYPE:-all}
+      SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
+      METABASE_CONTAINER: danang-metabase
+    volumes:
+      - ./workspace.yaml:/app/workspace.yaml:ro
+      - ../dbt:/app/dbt
+      - ../data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dagster_home:/opt/dagster_home
+    restart: unless-stopped
+
+volumes:
+  dagster_home:
