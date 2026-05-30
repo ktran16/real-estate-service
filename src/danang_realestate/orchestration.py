@@ -39,6 +39,7 @@ from dagster import (
     Definitions,
     In,
     MaterializeResult,
+    MetadataValue,
     Nothing,
     Out,
     RetryPolicy,
@@ -171,8 +172,11 @@ def _run_geocode(context) -> None:
         conn.close()
 
 
-def _run_check_mart_health(context) -> None:
-    """Fail if a mart that must have rows came out empty (guard before publishing)."""
+def _run_check_mart_health(context) -> dict[str, int]:
+    """Fail if a mart that must have rows came out empty (guard before publishing).
+
+    Returns the per-mart row counts so callers can surface them as run metrics.
+    """
     conn = get_connection()
     try:
         counts: dict[str, int] = {}
@@ -194,6 +198,7 @@ def _run_check_mart_health(context) -> None:
             )
         # Snapshot the (healthy) counts so the drop-detection sensor can compare runs.
         record_mart_counts(conn, counts)
+        return counts
     finally:
         conn.close()
 
@@ -260,6 +265,22 @@ def _run_dbt_build_cli(context) -> None:
     context.log.info("dbt build completed.")
 
 
+def _run_source_freshness(context) -> None:
+    """Run `dbt source freshness` and raise if a source is stale (error state).
+
+    `raw_listings` has a `freshness:` block (warn >36h, error >7d) keyed on `scraped_at`, so a
+    stalled scrape surfaces here. dbt exits non-zero on an *error* state; that raise trips the
+    run-failure sensor (Slack). Warnings (exit 0) are logged but don't fail the run.
+    """
+    invocation = DbtCliResource(project_dir=dbt_project).cli(["source", "freshness"]).wait()
+    if not invocation.is_successful():
+        raise RuntimeError(
+            "dbt source freshness reported an error — a source is stale (no fresh scrape?). "
+            "See the dbt logs / sources.json."
+        )
+    context.log.info("dbt source freshness: all sources within thresholds.")
+
+
 # --------------------------------------------------------------------------------------------
 # Asset graph for the daily refresh (dagster-dbt).
 # --------------------------------------------------------------------------------------------
@@ -292,10 +313,16 @@ def dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
     retry_policy=_NET_RETRY,
     compute_kind="postgres",
 )
-def published_marts(context: AssetExecutionContext) -> None:
-    """Health-check the marts, then publish them atomically to the Postgres serving DB."""
-    _run_check_mart_health(context)
+def published_marts(context: AssetExecutionContext) -> MaterializeResult:
+    """Health-check the marts, then publish them atomically to the Postgres serving DB.
+
+    Emits the per-mart row counts as asset metadata — run metrics visible in the Dagster UI.
+    """
+    counts = _run_check_mart_health(context)
     _run_publish_to_postgres(context)
+    metadata: dict = {f"rows.{mart}": MetadataValue.int(n) for mart, n in counts.items()}
+    metadata["total_marts"] = MetadataValue.int(len(counts))
+    return MaterializeResult(metadata=metadata)
 
 
 daily_refresh = define_asset_job(
@@ -394,10 +421,37 @@ def weekly_maintenance():
     backup_database(start=published)
 
 
+@op(retry_policy=_NET_RETRY)
+def check_source_freshness(context) -> None:
+    """Run `dbt source freshness`; raises (→ Slack via the failure sensor) if a source is stale."""
+    _run_source_freshness(context)
+
+
+@op
+def emit_heartbeat(context) -> None:
+    """Post a periodic 'all green' Slack so silence is distinguishable from a broken sensor."""
+    delivered = post_slack(
+        ":white_check_mark: Da Nang pipeline heartbeat — schedules + alert sensors are alive."
+    )
+    context.log.info("Heartbeat posted." if delivered else "Heartbeat skipped (no webhook).")
+
+
 @job
 def schema_drift_check():
     """Standalone API-schema-drift check (fails loudly so the alert sensor fires)."""
     check_api_schema()
+
+
+@job
+def source_freshness_check():
+    """Standalone dbt source-freshness check (fails loudly so the alert sensor fires)."""
+    check_source_freshness()
+
+
+@job
+def heartbeat():
+    """Periodic 'all green' heartbeat to Slack."""
+    emit_heartbeat()
 
 
 # --------------------------------------------------------------------------------------------
@@ -423,6 +477,22 @@ weekly_maintenance_schedule = ScheduleDefinition(
     name="weekly_maintenance_schedule",
     job=weekly_maintenance,
     cron_schedule="0 5 * * 0",  # weekly, Sunday 05:00
+    execution_timezone="Asia/Ho_Chi_Minh",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
+source_freshness_schedule = ScheduleDefinition(
+    name="source_freshness_schedule",
+    job=source_freshness_check,
+    cron_schedule="0 6 * * *",  # daily, 06:00 (after the 03:00 refresh)
+    execution_timezone="Asia/Ho_Chi_Minh",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
+heartbeat_schedule = ScheduleDefinition(
+    name="heartbeat_schedule",
+    job=heartbeat,
+    cron_schedule="0 8 * * 1",  # weekly, Monday 08:00
     execution_timezone="Asia/Ho_Chi_Minh",
     default_status=DefaultScheduleStatus.RUNNING,
 )
@@ -503,8 +573,20 @@ def deals_alert(context: RunStatusSensorContext) -> None:
 
 defs = Definitions(
     assets=[scraped_listings, geocoded_raw, dbt_models, published_marts],
-    jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
-    schedules=[daily_refresh_schedule, weekly_maintenance_schedule, schema_drift_schedule],
+    jobs=[
+        daily_refresh,
+        weekly_maintenance,
+        schema_drift_check,
+        source_freshness_check,
+        heartbeat,
+    ],
+    schedules=[
+        daily_refresh_schedule,
+        weekly_maintenance_schedule,
+        schema_drift_schedule,
+        source_freshness_schedule,
+        heartbeat_schedule,
+    ],
     sensors=[pipeline_failure_alert, mart_drop_alert, deals_alert],
     resources={"dbt": dbt_resource},
 )

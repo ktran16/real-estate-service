@@ -49,8 +49,9 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 4. **dbt source freshness + tests in CI with seed data.** *(M)* — ✅ **done.** Added a
    `freshness:` block on `raw_listings` and `dbt/seeds/*` gated to a `ci` target; CI now builds
-   marts/tests on realistic seeded rows (PASS=39). See `PROPOSALS.md` P1 #4. *Remaining:* wire
-   `dbt source freshness` into a monitoring schedule.
+   marts/tests on realistic seeded rows (PASS=39). The freshness check now runs on its own
+   **monitoring schedule** — a `source_freshness_check` Dagster job (daily 06:00) that raises on a
+   stale source → Slack via the failure sensor. See `PROPOSALS.md` P1 #4.
 
 5. **Incremental publish to Postgres.** *(M)* — ✅ **done (atomic swap).** `publish_to_postgres`
    builds `<mart>__staging` tables then swaps all marts in one native Postgres transaction

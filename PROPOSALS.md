@@ -80,8 +80,10 @@ give Metabase its own least-privilege read-only PG role.
 - `alerting.post_slack` no-ops safely when `SLACK_WEBHOOK_URL` is unset and never raises
   (alerting can't take down the pipeline it reports on). Unit-tested.
 
-**Optional next:** add email (SMTP) as a second channel; add a success heartbeat (a weekly
-"all green" message) so silence is distinguishable from a broken sensor.
+**Optional next:** ✅ **success heartbeat shipped** — a `heartbeat` job (weekly Mon 08:00) posts
+an "all green" Slack so silence is distinguishable from a broken sensor (`emit_heartbeat`, no-op
+without a webhook). Email (SMTP) as a second channel is deliberately deferred (no SMTP server in
+this environment; Slack + heartbeat already covers the silence-vs-broken gap).
 
 ---
 
@@ -93,8 +95,10 @@ scraped_at` on the `raw_listings` source (warn >36 h, error >7 d). Shipped `dbt/
 == 'ci'`) so they never clobber dev/prod (which use `dbt run`). CI now `dbt seed --target ci`
 then `dbt build --target ci` → marts/tests run on realistic rows (PASS=39): broker detection
 (account with 5 listings), price-change filtering (5% threshold), and the geocode-cache coalesce
-are all genuinely exercised. *Remaining:* wire `dbt source freshness` into a monitoring schedule
-(it can't run in CI — seed timestamps are fixed). Reuse `alerting.post_slack` for the alert.
+are all genuinely exercised. **Monitoring schedule shipped:** a `source_freshness_check` Dagster
+job (daily 06:00) runs `dbt source freshness` against the live DB and raises on an error state
+(stale source), tripping the run-failure sensor → Slack. (Can't run in CI — seed timestamps are
+fixed.)
 
 **#5 Atomic publish to Postgres. ✅ done.** `publish_to_postgres` now builds each mart into a
 `<mart>__staging` table, then swaps ALL marts into place in **one native Postgres transaction**
@@ -150,7 +154,9 @@ and the failure trips the Slack sensor. Added this round:
   `daily_refresh`/`weekly_maintenance` SUCCESS) Slack-alerts when a mart shrinks ≥30% vs the
   prior run — catching a *partial* break that still emits some rows (which the empty-guard would
   miss). Threshold is configurable; growth and sub-threshold churn are ignored. Unit-tested.
-*Remaining (optional):* Dagster run metrics/asset metadata; an email channel.
+**Run metrics shipped:** the `published_marts` asset emits per-mart row counts as Dagster asset
+metadata (`rows.<mart>` + `total_marts`) — visible as run metrics in the UI. *Deferred (optional):*
+an email alerting channel.
 
 ## P3 — Hygiene
 
