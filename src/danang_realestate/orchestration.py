@@ -85,7 +85,17 @@ PG_PASSWORD = settings.pg_password
 PG_SCHEMA = settings.pg_schema
 
 # The dbt marts to publish to Postgres for Metabase to serve.
-MARTS = ["listings", "price_by_district", "price_trend", "price_changes", "broker_listings"]
+MARTS = [
+    "listings",
+    "price_by_district",
+    "price_trend",
+    "price_changes",
+    "broker_listings",
+    "price_per_sqm_by_ward",
+    "listing_days_on_market",
+    "listing_velocity",
+    "broker_concentration",
+]
 
 # Marts that should never be empty after a successful run (an empty one means the pipeline
 # broke upstream). price_changes/broker_listings can legitimately be empty, so they're excluded.

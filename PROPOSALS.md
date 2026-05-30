@@ -171,13 +171,30 @@ helper) so it's clean across 23 files, and wired a CI `mypy` step + `.pre-commit
 (ruff + mypy).
 **#13 Config consolidation:** ✅ done as part of P0 #2 (PG_* now in `Settings`).
 
-## P4 — Product/analytics (proposed)
+## P4 — Product/analytics
 
-**#14 Richer marts:** price-per-sqm percentiles by ward, days-on-market, new-vs-removed
-velocity, broker-concentration trends. **#15 Deals alerting:** a `deals` mart flagging listings
-materially below their ward median + a notification sensor. **#16 Dashboards as code:** export
-Metabase dashboards via the serialization API so they're version-controlled (removes the only
-manual setup step).
+**#14 Richer marts. ✅ done.** Four new marts off `int_listings_geocoded`, added to the publish
+`MARTS` list so Metabase serves them:
+- `price_per_sqm_by_ward` — min/p25/median/p75/p90/max price-per-sqm per ward × transaction ×
+  property type (percentiles via `QUANTILE_CONT`, more robust than the mean already in
+  `price_by_district`).
+- `listing_days_on_market` — per-listing DOM = `posted_at → scraped_at` (last seen), clamped to
+  ≥0, with a `dom_bucket` (0-7 / 8-30 / 31-90 / 90+) and `is_active` so active = "listed so far"
+  vs inactive = "total time to removal".
+- `listing_velocity` — weekly `new_listings` (by `posted_at`) vs `removed_listings` (inactive, by
+  `scraped_at`) per district + `net_change` (a market-supply pulse; removal time is approximate
+  to the rescrape cadence).
+- `broker_concentration` — per district: `broker_share` (is_broker listings / active) and
+  `top_account_share` (largest single account / active) as a concentration proxy; daily snapshots
+  give the trend.
+Tests: schema `not_null`/`accepted_values`/`unique` + 3 singular tests (percentiles monotonic,
+DOM non-negative, shares in [0,1]). `dbt build PASS=61`. *Future:* a true time-series
+broker-concentration mart once enough daily snapshots accumulate.
+
+**#15 Deals alerting:** a `deals` mart flagging listings materially below their ward median +
+a notification sensor (now unlocked — `price_per_sqm_by_ward` gives the ward benchmark to compare
+against). **#16 Dashboards as code:** export Metabase dashboards via the serialization API so
+they're version-controlled (removes the only manual setup step).
 
 ---
 
@@ -191,5 +208,6 @@ manual setup step).
 7. ✅ ~~**P3 #12** (mypy + pre-commit)~~ — done.
 8. ✅ ~~**P2 #10 remainder** (structured logging + drop-detection sensor → `post_slack`)~~ — done.
 9. ✅ ~~**P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests)~~ — done.
-10. **P4** (richer marts, deals alerting, dashboards-as-code). *(M)*
-11. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
+10. ✅ ~~**P4 #14** (richer marts)~~ — done.
+11. **P4 #15/#16** (deals-alerting mart + sensor; dashboards-as-code). *(M)*
+12. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

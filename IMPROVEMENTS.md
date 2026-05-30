@@ -97,8 +97,12 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 ## P4 — Product / analytics
 
-14. **Richer marts:** price-per-sqm percentiles by ward, days-on-market, new-vs-removed
-    listing velocity, broker concentration trends.
+14. **Richer marts:** *(M)* — ✅ **done.** Four new dbt marts (published to Postgres for
+    Metabase): `price_per_sqm_by_ward` (p25/median/p75/p90 per ward), `listing_days_on_market`
+    (per-listing DOM + bucket), `listing_velocity` (weekly new-vs-removed per district), and
+    `broker_concentration` (broker share + top-account share per district). +schema tests + 3
+    singular tests (percentile ordering, non-negative DOM, shares in [0,1]) → `dbt build PASS=61`.
+    See `PROPOSALS.md` P4 #14.
 15. **Alerting on deals:** flag listings priced materially below their ward's median (a "deals"
     mart + a notification sensor).
 16. **Dashboards as code:** export Metabase dashboards via the serialization API so they're

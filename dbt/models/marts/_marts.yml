@@ -68,3 +68,62 @@ models:
       - name: active_listing_count
         tests:
           - not_null
+
+  - name: price_per_sqm_by_ward
+    description: Price-per-sqm percentiles (p25/median/p75/p90) per ward / transaction / property.
+    columns:
+      - name: ward
+        tests:
+          - not_null
+      - name: listing_count
+        tests:
+          - not_null
+      - name: median_price_per_sqm
+        tests:
+          - not_null
+
+  - name: listing_days_on_market
+    description: Per-listing days on market (posted_at → last seen) with a bucket label.
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+      - name: days_on_market
+        tests:
+          - not_null
+      - name: dom_bucket
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["0-7", "8-30", "31-90", "90+"]
+
+  - name: listing_velocity
+    description: Weekly new-vs-removed listing counts per district (supply pulse).
+    columns:
+      - name: week_start
+        tests:
+          - not_null
+      - name: district
+        tests:
+          - not_null
+      - name: new_listings
+        tests:
+          - not_null
+      - name: removed_listings
+        tests:
+          - not_null
+
+  - name: broker_concentration
+    description: Broker share + top-account share of active listings per district.
+    columns:
+      - name: district
+        tests:
+          - not_null
+          - unique
+      - name: active_listings
+        tests:
+          - not_null
+      - name: broker_share
+        tests:
+          - not_null
