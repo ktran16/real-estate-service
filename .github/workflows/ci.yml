@@ -22,6 +22,12 @@ jobs:
       - name: Install dependencies (dev group + dagster extra)
         run: uv sync --dev --extra dagster
 
+      - name: Generate dbt manifest (dagster-dbt reads it at import)
+        working-directory: dbt
+        # @dbt_assets parses the manifest at import time; generate it (default/dev target,
+        # seeds disabled) before anything imports the orchestration module.
+        run: uv run dbt parse --profiles-dir .
+
       - name: Lint (ruff)
         run: uv run ruff check .
 

@@ -23,7 +23,12 @@ dependencies = [
 [project.optional-dependencies]
 curl-cffi = ["curl_cffi"]
 playwright = ["playwright"]
-dagster = ["dagster", "dagster-webserver", "dagster-duckdb"]
+dagster = [
+    "dagster",
+    "dagster-webserver",
+    "dagster-duckdb",
+    "dagster-dbt>=0.29.7",
+]
 
 [project.scripts]
 danang-realestate = "danang_realestate.cli:app"

@@ -67,9 +67,10 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 ## P2 — Platform & observability
 
-8. **dagster-dbt integration.** *(M)*
-   Replace the `subprocess uv run dbt` op with `dagster-dbt` so each model is an asset with
-   lineage, per-model retries, and test results surfaced in the Dagster UI.
+8. **dagster-dbt integration.** *(M)* — ✅ **done.** `daily_refresh` is an asset graph
+   (`scraped_listings` → `geocoded_raw` → `@dbt_assets` per-model → `published_marts`); dbt tests
+   are asset checks; no subprocess (op jobs use `DbtCliResource`). Verified end-to-end against the
+   live stack. See `PROPOSALS.md` P2 #8.
 
 9. **Postgres durability.** *(S)*
    Add scheduled `pg_dump` backups (a Dagster op or sidecar) and document restore. Pin the

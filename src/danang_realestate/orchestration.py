@@ -1,46 +1,56 @@
 """Dagster orchestration for the Da Nang real estate pipeline.
 
-Architecture: DuckDB is the pipeline's working store (raw listings + dbt marts).
-A separate Postgres database holds a *serving copy* of the marts that Metabase reads
-(Metabase's built-in Postgres driver — no jar, always-on, concurrent with pipeline
-writes). Because Metabase never opens the DuckDB file, there is no single-writer
-stop/start dance: the job just scrapes → geocodes → builds marts → publishes to Postgres.
+Architecture: DuckDB is the pipeline's working store (raw listings + dbt marts). A separate
+Postgres database holds a *serving copy* of the marts that Metabase reads (Metabase's built-in
+Postgres driver — no jar, always-on). Because Metabase never opens the DuckDB file there is no
+single-writer dance: jobs scrape → geocode → build marts → publish to Postgres.
+
+The transform layer is modelled with **dagster-dbt**: each dbt model is its own asset, so the
+daily pipeline is an asset graph
+
+    scraped_listings → geocoded_raw (raw/* source tables) → dbt models → published_marts
+
+with per-model lineage and dbt test results surfaced as asset checks in the Dagster UI. The
+secondary op-based jobs (weekly_maintenance, schema_drift_check) reuse the same helpers and
+invoke dbt through `DbtCliResource` (no subprocess).
 
 Run locally (birdwatch already uses port 3000, so use another port):
 
     uv sync --extra dagster
     uv run dagster dev -m danang_realestate.orchestration -p 3070
 
-The `daily_refresh_schedule` fires at 03:00 Asia/Ho_Chi_Minh (needs the dagster daemon,
-which `dagster dev` runs). Marts are published to Postgres via DuckDB's native `postgres`
-extension (no extra Python dependency).
-
 Env overrides:
   SCRAPE_TYPE (all|sale|rent, default all), SCRAPE_LIMIT (int, default 100)
   PG_HOST, PG_PORT, PG_DB, PG_USER, PG_SCHEMA and the secret PG_PASSWORD (or
-  POSTGRES_PASSWORD) — all read via `config.settings` (single source of truth). The
-  password has no baked-in default; set it in an untracked .env (see .env.example).
+  POSTGRES_PASSWORD) — all read via `config.settings` (single source of truth). The password
+  has no baked-in default; set it in an untracked .env (see .env.example).
 """
-from __future__ import annotations
-
 import os
-import subprocess
 from pathlib import Path
 
 from dagster import (
+    AssetExecutionContext,
+    AssetKey,
+    AssetSelection,
+    AssetSpec,
     DefaultScheduleStatus,
     DefaultSensorStatus,
     Definitions,
     In,
+    MaterializeResult,
     Nothing,
     Out,
     RetryPolicy,
     RunFailureSensorContext,
     ScheduleDefinition,
+    asset,
+    define_asset_job,
     job,
+    multi_asset,
     op,
     run_failure_sensor,
 )
+from dagster_dbt import DbtCliResource, DbtProject, dbt_assets
 
 from danang_realestate.alerting import post_slack
 from danang_realestate.config import settings
@@ -61,9 +71,7 @@ SCRAPE_SOURCE = os.getenv("SCRAPE_SOURCE", "nhatot")
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
 
-# Postgres serving DB (the copy Metabase reads). Read from config.settings, which sources
-# PG_HOST/PG_PORT/PG_DB/PG_USER/PG_SCHEMA and the secret PG_PASSWORD from env/.env.
-# Inside the Dagster container the compose sets PG_HOST=postgres PG_PORT=5432.
+# Postgres serving DB (the copy Metabase reads). Read from config.settings.
 PG_HOST = settings.pg_host
 PG_PORT = settings.pg_port
 PG_DB = settings.pg_db
@@ -78,13 +86,38 @@ MARTS = ["listings", "price_by_district", "price_trend", "price_changes", "broke
 # broke upstream). price_changes/broker_listings can legitimately be empty, so they're excluded.
 CRITICAL_NONEMPTY_MARTS = ["listings", "price_by_district"]
 
+# dbt source tables (asset keys dagster-dbt derives for `source('raw', ...)`). The geocode
+# step is what leaves these tables fully populated, so it produces these asset keys.
+RAW_SOURCE_KEYS = [
+    AssetKey(["raw", "raw_listings"]),
+    AssetKey(["raw", "listing_price_history"]),
+    AssetKey(["raw", "geocode_cache"]),
+]
+
 # Network/DB ops can hit transient failures; give them a couple of retries.
 _NET_RETRY = RetryPolicy(max_retries=2, delay=10)
 
+# dagster-dbt project. @dbt_assets reads the manifest at import time, so make sure one exists:
+# prepare_if_dev() generates it under `dagster dev`; otherwise (CI / tests / a fresh container)
+# fall back to a plain `dbt parse`, which writes target/manifest.json (CI also does this as an
+# explicit step). dbt/ is bind-mounted into the Dagster containers, so this works there too.
+dbt_project = DbtProject(project_dir=str(DBT_DIR), profiles_dir=str(DBT_DIR))
+dbt_project.prepare_if_dev()
+if not Path(dbt_project.manifest_path).exists():
+    import subprocess
 
-@op(out=Out(Nothing), retry_policy=_NET_RETRY)
-def scrape_and_load(context) -> None:
-    """Scrape nhatot listings and upsert them (records price history)."""
+    subprocess.run(
+        ["dbt", "parse", "--profiles-dir", str(DBT_DIR)], cwd=str(DBT_DIR), check=True
+    )
+dbt_resource = DbtCliResource(project_dir=dbt_project)
+
+
+# --------------------------------------------------------------------------------------------
+# Shared pipeline steps (plain functions) — called by both the assets and the op-based jobs so
+# there is a single implementation of each step. `context` only needs a `.log`.
+# --------------------------------------------------------------------------------------------
+def _run_scrape_and_load(context) -> None:
+    """Scrape listings and upsert them (records price history)."""
     init_db()
     client = SafeHTTPClient()
     try:
@@ -103,9 +136,8 @@ def scrape_and_load(context) -> None:
         client.close()
 
 
-@op(out=Out(Nothing), ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
-def geocode_listings(context) -> None:
-    """Geocode any listings missing coordinates (cache → Nominatim → centroid)."""
+def _run_geocode(context) -> None:
+    """Geocode any listings missing coordinates (cache → Nominatim → Goong → centroid)."""
     init_db()
     conn = get_connection()
     geocoder = Geocoder(conn)
@@ -116,31 +148,8 @@ def geocode_listings(context) -> None:
         conn.close()
 
 
-@op(out=Out(Nothing), ins={"start": In(Nothing)})
-def run_dbt(context) -> None:
-    """Rebuild the analytics marts via dbt (in DuckDB)."""
-    result = subprocess.run(
-        ["uv", "run", "dbt", "run", "--profiles-dir", "."],
-        cwd=str(DBT_DIR),
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.stdout:
-        context.log.info(result.stdout)
-    if result.returncode != 0:
-        context.log.error(result.stderr)
-        raise RuntimeError(f"dbt run failed (exit {result.returncode})")
-
-
-@op(out=Out(Nothing), ins={"start": In(Nothing)})
-def check_mart_health(context) -> None:
-    """Guard rail before publishing: fail if a mart that must have rows came out empty.
-
-    Runs between dbt and the Postgres publish so a broken upstream (e.g. a scrape that
-    returned nothing) can't overwrite Metabase's marts with empty tables. Raising here trips
-    the failure sensor → Slack alert.
-    """
+def _run_check_mart_health(context) -> None:
+    """Fail if a mart that must have rows came out empty (guard before publishing)."""
     conn = get_connection()
     try:
         counts = {}
@@ -163,16 +172,13 @@ def check_mart_health(context) -> None:
         conn.close()
 
 
-@op(ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
-def publish_to_postgres(context) -> None:
-    """Publish the dbt marts to the Postgres serving DB (what Metabase reads) atomically.
+def _run_publish_to_postgres(context) -> None:
+    """Publish the dbt marts to the Postgres serving DB atomically (staging + one swap txn).
 
-    Uses DuckDB's native `postgres` extension to ATTACH Postgres. Each mart is written to a
-    `<mart>__staging` table first; then ALL marts are swapped into place inside a single
-    native Postgres transaction (DROP old + RENAME staging → final). This removes the brief
-    empty-table window the previous drop-then-recreate had: Metabase always reads either the
-    full previous marts or the full new ones, never an empty or half-published table. Metabase
-    never opens the DuckDB file, so no single-writer dance.
+    Each mart is written to a `<mart>__staging` table; then ALL marts are swapped into place in
+    a single native Postgres transaction (DROP old + RENAME staging → final). Metabase always
+    reads either the full previous marts or the full new ones — never an empty/half-published
+    table.
     """
     if not PG_PASSWORD:
         raise RuntimeError(
@@ -185,8 +191,6 @@ def publish_to_postgres(context) -> None:
         dsn = f"host={PG_HOST} port={PG_PORT} dbname={PG_DB} user={PG_USER} password={PG_PASSWORD}"
         conn.execute(f"ATTACH '{dsn}' AS pg (TYPE postgres)")
         try:
-            # 1) Build every present mart into a fresh staging table. If anything here
-            #    fails, the live tables are untouched (we haven't swapped yet).
             published = []
             swap_stmts = []
             for mart in MARTS:
@@ -208,12 +212,8 @@ def publish_to_postgres(context) -> None:
                 ).fetchone()[0]
                 published.append(f"{mart}={n}")
                 swap_stmts.append(f'DROP TABLE IF EXISTS {PG_SCHEMA}."{mart}";')
-                swap_stmts.append(
-                    f'ALTER TABLE {PG_SCHEMA}."{staging}" RENAME TO "{mart}";'
-                )
+                swap_stmts.append(f'ALTER TABLE {PG_SCHEMA}."{staging}" RENAME TO "{mart}";')
 
-            # 2) Swap all staging tables into place in ONE Postgres transaction, executed
-            #    natively on the server (postgres_execute) so the cutover is atomic.
             if swap_stmts:
                 swap_sql = "BEGIN;\n" + "\n".join(swap_stmts) + "\nCOMMIT;"
                 conn.execute("CALL postgres_execute('pg', ?)", [swap_sql])
@@ -227,35 +227,65 @@ def publish_to_postgres(context) -> None:
         conn.close()
 
 
-@op(retry_policy=_NET_RETRY)
-def check_api_schema(context) -> None:
-    """Detect nhatot/chotot API schema drift against the NhaTotAd model.
-
-    Raises on drift so the run fails — `pipeline_failure_alert` then notifies. This is the
-    early-warning that a silent API change has broken (or is about to break) scraping.
-    """
-    client = SafeHTTPClient()
-    try:
-        report = validate_schema(client)
-    finally:
-        client.close()
-    report.print_summary()
-    if report.has_drift():
-        raise RuntimeError(
-            "nhatot/chotot API schema drift detected. "
-            f"Extra fields: {sorted(report.extra_in_api)}. "
-            f"Missing critical fields: {sorted(report.missing_in_api & {'ad_id', 'list_id', 'account_id', 'price', 'size', 'type'})}."
-        )
-    context.log.info("No critical API schema drift.")
+def _run_dbt_build_cli(context) -> None:
+    """Run `dbt build` via DbtCliResource (used by the op-based jobs; no subprocess)."""
+    invocation = DbtCliResource(project_dir=dbt_project).cli(["build"]).wait()
+    if not invocation.is_successful():
+        raise RuntimeError("dbt build failed (see dbt logs).")
+    context.log.info("dbt build completed.")
 
 
+# --------------------------------------------------------------------------------------------
+# Asset graph for the daily refresh (dagster-dbt).
+# --------------------------------------------------------------------------------------------
+@asset(retry_policy=_NET_RETRY, compute_kind="python")
+def scraped_listings(context: AssetExecutionContext) -> None:
+    """Scrape the search results and upsert listings + price history into DuckDB."""
+    _run_scrape_and_load(context)
+
+
+@multi_asset(
+    specs=[AssetSpec(key, deps=[AssetKey("scraped_listings")]) for key in RAW_SOURCE_KEYS],
+    retry_policy=_NET_RETRY,
+    compute_kind="python",
+)
+def geocoded_raw(context: AssetExecutionContext):
+    """Geocode pending listings; leaves the raw_* source tables fully populated for dbt."""
+    _run_geocode(context)
+    for key in RAW_SOURCE_KEYS:
+        yield MaterializeResult(asset_key=key)
+
+
+@dbt_assets(manifest=dbt_project.manifest_path)
+def dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
+    """All dbt models + tests as assets (lineage + test results in the Dagster UI)."""
+    yield from dbt.cli(["build"], context=context).stream()
+
+
+@asset(
+    deps=[AssetKey(mart) for mart in MARTS],
+    retry_policy=_NET_RETRY,
+    compute_kind="postgres",
+)
+def published_marts(context: AssetExecutionContext) -> None:
+    """Health-check the marts, then publish them atomically to the Postgres serving DB."""
+    _run_check_mart_health(context)
+    _run_publish_to_postgres(context)
+
+
+daily_refresh = define_asset_job(
+    name="daily_refresh",
+    selection=AssetSelection.all(),
+    description="Full refresh: scrape → geocode → dbt models → publish to Postgres serving DB.",
+)
+
+
+# --------------------------------------------------------------------------------------------
+# Op-based secondary jobs (weekly maintenance + schema drift check).
+# --------------------------------------------------------------------------------------------
 @op(out=Out(Nothing), retry_policy=_NET_RETRY)
 def rescrape_active(context) -> None:
-    """Re-check active nhatot listings: record price changes, mark vanished ones inactive.
-
-    The daily search-results scrape catches price changes for still-listed/new ads, but never
-    deactivates ads that have disappeared — this op keeps `is_active`/`price_changes` honest.
-    """
+    """Re-check active nhatot listings: record price changes, mark vanished ones inactive."""
     init_db()
     client = SafeHTTPClient()
     conn = get_connection()
@@ -284,13 +314,40 @@ def regeocode_low_confidence(context) -> None:
         conn.close()
 
 
-@job
-def daily_refresh():
-    """Full refresh: scrape → geocode → dbt marts → health check → publish to Postgres."""
-    scraped = scrape_and_load()
-    geocoded = geocode_listings(start=scraped)
-    transformed = run_dbt(start=geocoded)
-    publish_to_postgres(start=check_mart_health(start=transformed))
+@op(out=Out(Nothing), ins={"start": In(Nothing)})
+def run_dbt(context) -> None:
+    """Rebuild the analytics marts via dbt (DbtCliResource)."""
+    _run_dbt_build_cli(context)
+
+
+@op(out=Out(Nothing), ins={"start": In(Nothing)})
+def check_mart_health(context) -> None:
+    """Guard rail before publishing: fail if a critical mart came out empty."""
+    _run_check_mart_health(context)
+
+
+@op(ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
+def publish_to_postgres(context) -> None:
+    """Publish the dbt marts to the Postgres serving DB atomically."""
+    _run_publish_to_postgres(context)
+
+
+@op(retry_policy=_NET_RETRY)
+def check_api_schema(context) -> None:
+    """Detect nhatot/chotot API schema drift against the NhaTotAd model (raises on drift)."""
+    client = SafeHTTPClient()
+    try:
+        report = validate_schema(client)
+    finally:
+        client.close()
+    report.print_summary()
+    if report.has_drift():
+        raise RuntimeError(
+            "nhatot/chotot API schema drift detected. "
+            f"Extra fields: {sorted(report.extra_in_api)}. "
+            f"Missing critical fields: {sorted(report.missing_in_api & {'ad_id', 'list_id', 'account_id', 'price', 'size', 'type'})}."
+        )
+    context.log.info("No critical API schema drift.")
 
 
 @job
@@ -307,20 +364,21 @@ def schema_drift_check():
     check_api_schema()
 
 
+# --------------------------------------------------------------------------------------------
+# Schedules + failure alerting.
+# --------------------------------------------------------------------------------------------
 daily_refresh_schedule = ScheduleDefinition(
     name="daily_refresh_schedule",
     job=daily_refresh,
     cron_schedule="0 3 * * *",
     execution_timezone="Asia/Ho_Chi_Minh",
-    # Start enabled, so the daemon runs it without toggling it on in the UI first.
     default_status=DefaultScheduleStatus.RUNNING,
 )
 
 schema_drift_schedule = ScheduleDefinition(
     name="schema_drift_schedule",
     job=schema_drift_check,
-    # Weekly, Monday 04:00 (after Monday's daily refresh).
-    cron_schedule="0 4 * * 1",
+    cron_schedule="0 4 * * 1",  # weekly, Monday 04:00
     execution_timezone="Asia/Ho_Chi_Minh",
     default_status=DefaultScheduleStatus.RUNNING,
 )
@@ -328,32 +386,24 @@ schema_drift_schedule = ScheduleDefinition(
 weekly_maintenance_schedule = ScheduleDefinition(
     name="weekly_maintenance_schedule",
     job=weekly_maintenance,
-    # Weekly, Sunday 05:00 (rescrape is per-listing and slow; keep it off the daily path).
-    cron_schedule="0 5 * * 0",
+    cron_schedule="0 5 * * 0",  # weekly, Sunday 05:00
     execution_timezone="Asia/Ho_Chi_Minh",
     default_status=DefaultScheduleStatus.RUNNING,
 )
 
 
-@run_failure_sensor(
-    monitored_jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
-    default_status=DefaultSensorStatus.RUNNING,
-)
+@run_failure_sensor(default_status=DefaultSensorStatus.RUNNING)
 def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
-    """Post a Slack alert when daily_refresh or the schema-drift check fails.
-
-    No-ops if SLACK_WEBHOOK_URL is unset (see alerting.post_slack), so the sensor is safe
-    to leave enabled even without alerting configured.
-    """
+    """Post a Slack alert when any job fails (no-op if SLACK_WEBHOOK_URL is unset)."""
     run = context.dagster_run
     error = context.failure_event.message or "(no error message)"
-    post_slack(
-        f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}"
-    )
+    post_slack(f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}")
 
 
 defs = Definitions(
+    assets=[scraped_listings, geocoded_raw, dbt_models, published_marts],
     jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
     schedules=[daily_refresh_schedule, weekly_maintenance_schedule, schema_drift_schedule],
     sensors=[pipeline_failure_alert],
+    resources={"dbt": dbt_resource},
 )
