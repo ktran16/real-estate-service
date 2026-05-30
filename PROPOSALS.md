@@ -88,10 +88,12 @@ give Metabase its own least-privilege read-only PG role.
 - `alerting.post_slack` no-ops safely when `SLACK_WEBHOOK_URL` is unset and never raises
   (alerting can't take down the pipeline it reports on). Unit-tested.
 
-**Optional next:** ✅ **success heartbeat shipped** — a `heartbeat` job (weekly Mon 08:00) posts
-an "all green" Slack so silence is distinguishable from a broken sensor (`emit_heartbeat`, no-op
-without a webhook). Email (SMTP) as a second channel is deliberately deferred (no SMTP server in
-this environment; Slack + heartbeat already covers the silence-vs-broken gap).
+**Optional next:** ✅ **both shipped.** (1) A `heartbeat` job (weekly Mon 08:00) posts an "all
+green" Slack so silence is distinguishable from a broken sensor (`emit_heartbeat`, no-op without a
+webhook). (2) **Email (SMTP) second channel** — `alerting.post_email` + `alerting.notify()` (Slack
++ email fan-out); the run-failure sensor now routes through `notify`, so failures hit every
+configured channel. Email no-ops unless `SMTP_HOST`/`ALERT_EMAIL_FROM`/`ALERT_EMAIL_TO` are set,
+and never raises. Unit-tested with a mocked `smtplib`.
 
 ---
 

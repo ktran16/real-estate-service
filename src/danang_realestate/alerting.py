@@ -1,12 +1,14 @@
-"""Lightweight alerting helper (Slack incoming webhook).
+"""Lightweight alerting helpers (Slack incoming webhook + optional SMTP email).
 
-Used by the Dagster failure sensor to notify on pipeline / schema-drift failures.
-No-ops (returns False) when `settings.slack_webhook_url` is unset, so the rest of the
-stack works without any alerting configured.
+Used by the Dagster sensors to notify on pipeline / schema-drift failures. Each channel
+no-ops (returns False) when it isn't configured, and NEVER raises — alerting must not take
+down the pipeline it is reporting on. `notify()` fans out to both channels.
 """
 from __future__ import annotations
 
 import logging
+import smtplib
+from email.message import EmailMessage
 
 import httpx
 
@@ -32,3 +34,37 @@ def post_slack(text: str, *, webhook_url: str | None = None, timeout: float = 10
     except Exception as exc:  # pragma: no cover - network failure path
         logger.warning("Failed to post Slack alert: %s", exc)
         return False
+
+
+def post_email(subject: str, body: str, *, timeout: float = 15.0) -> bool:
+    """Send an email alert via SMTP. Returns True if sent.
+
+    No-op (returns False) unless `smtp_host`, `alert_email_from` and `alert_email_to` are all
+    configured; never raises (a broken mail server must not break the pipeline).
+    """
+    s = settings
+    recipients = [addr.strip() for addr in s.alert_email_to.split(",") if addr.strip()]
+    if not (s.smtp_host and s.alert_email_from and recipients):
+        logger.info("Email alerting not configured; skipping: %s", subject)
+        return False
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = s.alert_email_from
+        msg["To"] = ", ".join(recipients)
+        msg.set_content(body)
+        with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=timeout) as server:
+            if s.smtp_starttls:
+                server.starttls()
+            if s.smtp_user:
+                server.login(s.smtp_user, s.smtp_password)
+            server.send_message(msg)
+        return True
+    except Exception as exc:  # pragma: no cover - network/SMTP failure path
+        logger.warning("Failed to send email alert: %s", exc)
+        return False
+
+
+def notify(text: str, *, subject: str = "Da Nang pipeline alert") -> dict[str, bool]:
+    """Fan out an alert to all configured channels (Slack + email). Returns per-channel status."""
+    return {"slack": post_slack(text), "email": post_email(subject, text)}

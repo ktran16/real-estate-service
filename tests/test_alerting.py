@@ -40,6 +40,78 @@ def test_post_slack_swallows_errors(monkeypatch):
     assert alerting.post_slack("x", webhook_url="https://hooks.example/x") is False
 
 
+def _configure_smtp(monkeypatch, **overrides):
+    defaults = dict(
+        smtp_host="smtp.example", smtp_port=587, smtp_user="", smtp_password="",
+        smtp_starttls=True, alert_email_from="bot@example", alert_email_to="you@example",
+    )
+    for key, value in {**defaults, **overrides}.items():
+        monkeypatch.setattr(alerting.settings, key, value)
+
+
+class _FakeSMTP:
+    instances: list = []
+
+    def __init__(self, host, port, timeout=None):
+        self.host, self.port = host, port
+        self.started_tls = False
+        self.logged_in = None
+        self.sent = []
+        _FakeSMTP.instances.append(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def starttls(self):
+        self.started_tls = True
+
+    def login(self, user, password):
+        self.logged_in = (user, password)
+
+    def send_message(self, msg):
+        self.sent.append(msg)
+
+
+def test_post_email_noop_without_config(monkeypatch):
+    monkeypatch.setattr(alerting.settings, "smtp_host", "")
+    monkeypatch.setattr(alerting.settings, "alert_email_to", "")
+    assert alerting.post_email("subj", "body") is False
+
+
+def test_post_email_sends_when_configured(monkeypatch):
+    _FakeSMTP.instances = []
+    _configure_smtp(monkeypatch, smtp_user="u", smtp_password="p", alert_email_to="a@x, b@y")
+    monkeypatch.setattr(alerting.smtplib, "SMTP", _FakeSMTP)
+
+    assert alerting.post_email("Alert", "details") is True
+    smtp = _FakeSMTP.instances[-1]
+    assert smtp.started_tls is True
+    assert smtp.logged_in == ("u", "p")
+    msg = smtp.sent[-1]
+    assert msg["Subject"] == "Alert"
+    assert msg["To"] == "a@x, b@y"
+    assert msg.get_content().strip() == "details"
+
+
+def test_post_email_swallows_errors(monkeypatch):
+    _configure_smtp(monkeypatch)
+
+    def boom(*a, **k):
+        raise RuntimeError("smtp down")
+
+    monkeypatch.setattr(alerting.smtplib, "SMTP", boom)
+    assert alerting.post_email("s", "b") is False
+
+
+def test_notify_fans_out(monkeypatch):
+    monkeypatch.setattr(alerting, "post_slack", lambda text: True)
+    monkeypatch.setattr(alerting, "post_email", lambda subject, text: False)
+    assert alerting.notify("hi", subject="x") == {"slack": True, "email": False}
+
+
 def test_check_api_schema_raises_on_drift(monkeypatch):
     from dagster import build_op_context
 

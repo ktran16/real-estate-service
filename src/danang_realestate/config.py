@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     # incoming-webhook URL when daily_refresh or the schema-drift check fails.
     slack_webhook_url: str = ""
 
+    # Email alerting (optional second channel). Disabled unless smtp_host +
+    # alert_email_from + alert_email_to are all set. `alert_email_to` is comma-separated.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = True
+    alert_email_from: str = ""
+    alert_email_to: str = ""
+
     @property
     def db_dir(self) -> Path:
         return Path(self.duckdb_path).parent

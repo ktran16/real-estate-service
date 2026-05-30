@@ -56,7 +56,7 @@ from dagster import (
 )
 from dagster_dbt import DbtCliResource, DbtProject, dbt_assets
 
-from danang_realestate.alerting import post_slack
+from danang_realestate.alerting import notify, post_slack
 from danang_realestate.config import settings
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.backup import backup_duckdb
@@ -503,7 +503,11 @@ def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
     """Post a Slack alert when any job fails (no-op if SLACK_WEBHOOK_URL is unset)."""
     run = context.dagster_run
     error = context.failure_event.message or "(no error message)"
-    post_slack(f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}")
+    # Critical alert → fan out to every configured channel (Slack + email).
+    notify(
+        f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}",
+        subject=f"[Da Nang pipeline] {run.job_name} FAILED",
+    )
 
 
 @run_status_sensor(
