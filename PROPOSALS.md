@@ -165,8 +165,8 @@ and the failure trips the Slack sensor. Added this round:
   prior run — catching a *partial* break that still emits some rows (which the empty-guard would
   miss). Threshold is configurable; growth and sub-threshold churn are ignored. Unit-tested.
 **Run metrics shipped:** the `published_marts` asset emits per-mart row counts as Dagster asset
-metadata (`rows.<mart>` + `total_marts`) — visible as run metrics in the UI. *Deferred (optional):*
-an email alerting channel.
+metadata (`rows.<mart>` + `total_marts`) — visible as run metrics in the UI. (The email alerting
+channel is also shipped — see P0 #3 above.)
 
 ## P3 — Hygiene
 
