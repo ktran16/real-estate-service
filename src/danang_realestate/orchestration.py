@@ -74,6 +74,10 @@ PG_SCHEMA = settings.pg_schema
 # The dbt marts to publish to Postgres for Metabase to serve.
 MARTS = ["listings", "price_by_district", "price_trend", "price_changes", "broker_listings"]
 
+# Marts that should never be empty after a successful run (an empty one means the pipeline
+# broke upstream). price_changes/broker_listings can legitimately be empty, so they're excluded.
+CRITICAL_NONEMPTY_MARTS = ["listings", "price_by_district"]
+
 # Network/DB ops can hit transient failures; give them a couple of retries.
 _NET_RETRY = RetryPolicy(max_retries=2, delay=10)
 
@@ -127,6 +131,36 @@ def run_dbt(context) -> None:
     if result.returncode != 0:
         context.log.error(result.stderr)
         raise RuntimeError(f"dbt run failed (exit {result.returncode})")
+
+
+@op(out=Out(Nothing), ins={"start": In(Nothing)})
+def check_mart_health(context) -> None:
+    """Guard rail before publishing: fail if a mart that must have rows came out empty.
+
+    Runs between dbt and the Postgres publish so a broken upstream (e.g. a scrape that
+    returned nothing) can't overwrite Metabase's marts with empty tables. Raising here trips
+    the failure sensor → Slack alert.
+    """
+    conn = get_connection()
+    try:
+        counts = {}
+        for mart in MARTS:
+            present = conn.execute(
+                "SELECT count(*) FROM duckdb_tables() "
+                "WHERE database_name = current_database() AND table_name = ?",
+                [mart],
+            ).fetchone()[0]
+            if present:
+                counts[mart] = conn.execute(f'SELECT count(*) FROM "{mart}"').fetchone()[0]
+        context.log.info("Mart row counts: %s", counts)
+        empty_critical = [m for m in CRITICAL_NONEMPTY_MARTS if counts.get(m, 0) == 0]
+        if empty_critical:
+            raise RuntimeError(
+                f"Critical marts unexpectedly empty: {empty_critical} (counts={counts}). "
+                "Refusing to publish empty marts to the Postgres serving DB."
+            )
+    finally:
+        conn.close()
 
 
 @op(ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
@@ -252,11 +286,11 @@ def regeocode_low_confidence(context) -> None:
 
 @job
 def daily_refresh():
-    """Full refresh: scrape → geocode → dbt marts → publish to Postgres serving DB."""
+    """Full refresh: scrape → geocode → dbt marts → health check → publish to Postgres."""
     scraped = scrape_and_load()
     geocoded = geocode_listings(start=scraped)
     transformed = run_dbt(start=geocoded)
-    publish_to_postgres(start=transformed)
+    publish_to_postgres(start=check_mart_health(start=transformed))
 
 
 @job
@@ -264,7 +298,7 @@ def weekly_maintenance():
     """Re-check active listings (deactivate vanished) then upgrade low-confidence geocodes."""
     rescraped = rescrape_active()
     transformed = run_dbt(start=regeocode_low_confidence(start=rescraped))
-    publish_to_postgres(start=transformed)
+    publish_to_postgres(start=check_mart_health(start=transformed))
 
 
 @job

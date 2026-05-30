@@ -126,8 +126,11 @@ win. Do after #4 so seeds/tests come along for free.
 **#9 Postgres durability.** Scheduled `pg_dump` (a Dagster op or sidecar + cron) to a mounted
 volume, documented restore, and pin Metabase + Postgres image **digests** (not just tags).
 
-**#10 Observability.** Structured (JSON) logging, Dagster run-metrics, and a row-count freshness
-sensor that alerts when a mart's row count drops unexpectedly (reuse `alerting.post_slack`).
+**#10 Observability.** 🟡 **partial.** Added a `check_mart_health` op in both pipelines (between
+dbt and publish) that logs all mart row counts and **raises if a critical mart (`listings`,
+`price_by_district`) is empty** — so a broken upstream can't overwrite Metabase with empty marts,
+and the failure trips the Slack sensor. *Remaining:* structured (JSON) logging, Dagster run
+metrics, and a drop-detection sensor (alert when a row count falls materially vs the prior run).
 
 ## P3 — Hygiene (proposed)
 

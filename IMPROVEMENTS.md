@@ -75,8 +75,9 @@ This plan is ordered by leverage. Each item notes the rough effort.
    Add scheduled `pg_dump` backups (a Dagster op or sidecar) and document restore. Pin the
    Metabase + Postgres image digests.
 
-10. **Observability.** *(S)* Structured logging, Dagster run metrics, and a freshness/row-count
-    sensor that alerts when a mart's row count drops unexpectedly.
+10. **Observability.** *(S)* — 🟡 **partial.** Added `check_mart_health` (fails the run + Slack
+    alert if a critical mart is empty, before publish). Remaining: structured logging, run
+    metrics, drop-detection sensor. See `PROPOSALS.md` P2 #10.
 
 ## P3 — Engineering hygiene
 

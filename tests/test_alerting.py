@@ -74,3 +74,39 @@ def test_check_api_schema_passes_when_clean(monkeypatch):
 class _DummyClient:
     def close(self):
         pass
+
+
+def _duckdb_with_marts(listings_rows, pbd_rows):
+    import duckdb
+
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE listings (listing_id BIGINT)")
+    conn.execute("CREATE TABLE price_by_district (district VARCHAR)")
+    for i in range(listings_rows):
+        conn.execute("INSERT INTO listings VALUES (?)", [i])
+    for i in range(pbd_rows):
+        conn.execute("INSERT INTO price_by_district VALUES (?)", [str(i)])
+    return conn
+
+
+def test_check_mart_health_passes_when_populated(monkeypatch):
+    from dagster import build_op_context
+
+    from danang_realestate import orchestration
+
+    conn = _duckdb_with_marts(listings_rows=5, pbd_rows=3)
+    monkeypatch.setattr(orchestration, "get_connection", lambda: conn)
+    # Should not raise.
+    orchestration.check_mart_health(build_op_context())
+
+
+def test_check_mart_health_raises_on_empty_critical_mart(monkeypatch):
+    import pytest
+    from dagster import build_op_context
+
+    from danang_realestate import orchestration
+
+    conn = _duckdb_with_marts(listings_rows=0, pbd_rows=3)  # listings empty
+    monkeypatch.setattr(orchestration, "get_connection", lambda: conn)
+    with pytest.raises(RuntimeError, match="unexpectedly empty"):
+        orchestration.check_mart_health(build_op_context())
