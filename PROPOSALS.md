@@ -103,13 +103,19 @@ reads either the full previous marts or the full new ones — never an empty/hal
 Verified end-to-end against the live PG (104 listings, 0 leftover staging tables). *Future:* a
 true upsert/merge if the marts ever grow large enough that a full rewrite is too heavy.
 
-**#6 Geocoding robustness.** Add rate-limit + retry/backoff around Goong (tenacity, already a
-dep), persist a `confidence`/tier column, and a re-geocode pass that upgrades district-centroid
-rows once a better tier is available. Consider Goong batch geocoding for throughput.
+**#6 Geocoding robustness. ✅ done.** Retry/backoff + request delay already came free via
+`SafeHTTPClient` (tenacity, 3 attempts) which Goong uses. Added **tiered confidence**
+(`CONFIDENCE`: nominatim 0.9 / goong 0.8 / centroid 0.3 / none 0.0) persisted to
+`geocode_cache.confidence`, and `Geocoder.regeocode_low_confidence()` which drops + re-resolves
+low-confidence (centroid) entries and upgrades the matching `raw_listings` coords when a better
+tier resolves. Unit-tested. Wired as a Dagster op in `weekly_maintenance`. *Future:* Goong batch
+geocoding for throughput.
 
-**#7 Scheduled `rescrape`.** `daily_refresh` catches price changes for still-listed ads but
-never marks vanished ones inactive. Add a `rescrape` op/job (offline detection: listings not
-seen in N days → `is_active=false`) on its own cadence so `is_active`/`price_changes` stay honest.
+**#7 Scheduled `rescrape`. ✅ done.** Extracted the rescrape core into
+`pipeline/rescraper.rescrape_active_listings` (offline → `is_active=false`; price change →
+history row + price update), refactored the CLI onto it, and added a `weekly_maintenance` Dagster
+job + Sunday-05:00 schedule (rescrape → regeocode → dbt → publish). Keeps `is_active`/
+`price_changes` honest without slowing the daily path. Unit-tested (4 cases).
 
 ## P2 — Platform & observability (proposed)
 
@@ -143,6 +149,8 @@ manual setup step).
 ## Suggested next sequence
 1. ✅ ~~**P1 #4** (seed data + freshness)~~ — done.
 2. ✅ ~~**P1 #5** (atomic publish)~~ — done.
-3. **P2 #8** (dagster-dbt) — observability/lineage; pairs well with the new seeds/tests. *(M)*
-4. **P1 #6** (geocoding retry/backoff + confidence) or **P1 #7** (scheduled rescrape). *(M/S)*
-5. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
+3. ✅ ~~**P1 #6** (geocoding confidence + re-geocode)~~ — done.
+4. ✅ ~~**P1 #7** (scheduled rescrape)~~ — done.
+5. **P2 #8** (dagster-dbt) — observability/lineage; pairs well with the new seeds/tests. *(M)*
+6. **P2 #9/#10** (PG backups + pin digests; row-count freshness sensor → `post_slack`). *(S)*
+7. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

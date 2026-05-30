@@ -47,7 +47,9 @@ from danang_realestate.config import settings
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
+from danang_realestate.pipeline.rescraper import rescrape_active_listings
 from danang_realestate.scrapers import get_scraper
+from danang_realestate.scrapers.nhatot import NhaTotScraper
 from danang_realestate.utils.http import SafeHTTPClient
 from danang_realestate.validation.schema_validator import validate_schema
 
@@ -213,12 +215,55 @@ def check_api_schema(context) -> None:
     context.log.info("No critical API schema drift.")
 
 
+@op(out=Out(Nothing), retry_policy=_NET_RETRY)
+def rescrape_active(context) -> None:
+    """Re-check active nhatot listings: record price changes, mark vanished ones inactive.
+
+    The daily search-results scrape catches price changes for still-listed/new ads, but never
+    deactivates ads that have disappeared — this op keeps `is_active`/`price_changes` honest.
+    """
+    init_db()
+    client = SafeHTTPClient()
+    conn = get_connection()
+    try:
+        result = rescrape_active_listings(conn, NhaTotScraper(client))
+        context.log.info(
+            "Rescrape: checked=%d price_updated=%d deactivated=%d",
+            result.checked, result.price_updated, result.deactivated,
+        )
+    finally:
+        conn.close()
+        client.close()
+
+
+@op(out=Out(Nothing), ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
+def regeocode_low_confidence(context) -> None:
+    """Re-attempt low-confidence (district-centroid) geocodes in case a better tier resolves."""
+    init_db()
+    conn = get_connection()
+    geocoder = Geocoder(conn)
+    try:
+        upgraded = geocoder.regeocode_low_confidence()
+        context.log.info("Re-geocode upgraded %d low-confidence addresses.", upgraded)
+    finally:
+        geocoder.close()
+        conn.close()
+
+
 @job
 def daily_refresh():
     """Full refresh: scrape → geocode → dbt marts → publish to Postgres serving DB."""
     scraped = scrape_and_load()
     geocoded = geocode_listings(start=scraped)
     transformed = run_dbt(start=geocoded)
+    publish_to_postgres(start=transformed)
+
+
+@job
+def weekly_maintenance():
+    """Re-check active listings (deactivate vanished) then upgrade low-confidence geocodes."""
+    rescraped = rescrape_active()
+    transformed = run_dbt(start=regeocode_low_confidence(start=rescraped))
     publish_to_postgres(start=transformed)
 
 
@@ -246,9 +291,18 @@ schema_drift_schedule = ScheduleDefinition(
     default_status=DefaultScheduleStatus.RUNNING,
 )
 
+weekly_maintenance_schedule = ScheduleDefinition(
+    name="weekly_maintenance_schedule",
+    job=weekly_maintenance,
+    # Weekly, Sunday 05:00 (rescrape is per-listing and slow; keep it off the daily path).
+    cron_schedule="0 5 * * 0",
+    execution_timezone="Asia/Ho_Chi_Minh",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
 
 @run_failure_sensor(
-    monitored_jobs=[daily_refresh, schema_drift_check],
+    monitored_jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
     default_status=DefaultSensorStatus.RUNNING,
 )
 def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
@@ -265,7 +319,7 @@ def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
 
 
 defs = Definitions(
-    jobs=[daily_refresh, schema_drift_check],
-    schedules=[daily_refresh_schedule, schema_drift_schedule],
+    jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
+    schedules=[daily_refresh_schedule, weekly_maintenance_schedule, schema_drift_schedule],
     sensors=[pipeline_failure_alert],
 )

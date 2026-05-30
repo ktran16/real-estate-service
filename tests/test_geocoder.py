@@ -98,7 +98,7 @@ class TestGeocoder(unittest.TestCase):
             "SELECT geocoder_source, confidence FROM geocode_cache WHERE address_raw = 'Goong-resolvable address'"
         ).fetchone()
         self.assertEqual(row[0], "goong")
-        self.assertEqual(row[1], 1.0)
+        self.assertEqual(row[1], 0.8)  # goong tier confidence
 
     def test_geocode_no_goong_without_key(self):
         # Without a key, Goong is skipped entirely and we fall back to centroid.
@@ -120,11 +120,56 @@ class TestGeocoder(unittest.TestCase):
 
         # Verify it was added to the cache
         cache_row = self.conn.execute(
-            "SELECT lat, lng, geocoder_source FROM geocode_cache WHERE address_raw = 'Unresolvable address'"
+            "SELECT lat, lng, geocoder_source, confidence FROM geocode_cache WHERE address_raw = 'Unresolvable address'"
         ).fetchone()
         self.assertIsNotNone(cache_row)
         self.assertEqual(cache_row[0], 16.0472)
         self.assertEqual(cache_row[2], "district_centroid")
+        self.assertEqual(cache_row[3], 0.3)  # centroid tier confidence
+
+    def test_regeocode_low_confidence_upgrades(self):
+        # A raw_listings table with one listing that previously fell back to the centroid.
+        self.conn.execute(
+            """
+            CREATE TABLE raw_listings (
+                listing_id BIGINT, source VARCHAR, address_raw VARCHAR,
+                district VARCHAR, lat DOUBLE, lng DOUBLE
+            )
+            """
+        )
+        self.conn.execute(
+            "INSERT INTO raw_listings VALUES (1, 'nhatot', '15 Real St', 'Hải Châu', 16.0472, 108.2208)"
+        )
+        # Low-confidence centroid cache entry for that address.
+        self.conn.execute(
+            """
+            INSERT INTO geocode_cache (address_raw, lat, lng, geocoder_source, geocoded_at, confidence)
+            VALUES ('15 Real St', 16.0472, 108.2208, 'district_centroid', ?, 0.3)
+            """,
+            [utcnow()],
+        )
+        # This time Nominatim resolves a precise location.
+        self.geocoder.geolocator.geocode.return_value = MagicMock(latitude=16.06, longitude=108.21)
+
+        upgraded = self.geocoder.regeocode_low_confidence(confidence_below=0.5)
+        self.assertEqual(upgraded, 1)
+
+        # raw_listings coords upgraded to the precise location.
+        row = self.conn.execute(
+            "SELECT lat, lng FROM raw_listings WHERE listing_id = 1"
+        ).fetchone()
+        self.assertEqual(row, (16.06, 108.21))
+        # cache entry now address-level (higher confidence).
+        crow = self.conn.execute(
+            "SELECT geocoder_source, confidence FROM geocode_cache WHERE address_raw = '15 Real St'"
+        ).fetchone()
+        self.assertEqual(crow[0], "nominatim")
+        self.assertEqual(crow[1], 0.9)
+
+    def test_regeocode_low_confidence_no_rows(self):
+        # Nothing below the threshold -> no work, returns 0.
+        self.assertEqual(self.geocoder.regeocode_low_confidence(confidence_below=0.5), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 
 GOONG_GEOCODE_URL = "https://rsapi.goong.io/Geocode"
 
+# Confidence per geocoding tier (persisted to geocode_cache.confidence). Address-level
+# geocoders are trusted more than the district-centroid fallback, which is only a rough
+# placeholder. `regeocode_low_confidence` uses this to find rows worth re-attempting.
+CONFIDENCE = {
+    "nominatim": 0.9,
+    "goong": 0.8,
+    "district_centroid": 0.3,
+    "none": 0.0,
+}
+
 class Geocoder:
     def __init__(
         self,
@@ -131,7 +141,12 @@ class Geocoder:
             else:
                 logger.warning(f"No fallback found for district '{district}'")
 
-        # 5. Save to Cache
+        # No tier resolved coordinates at all.
+        if lat is None or lng is None:
+            source = "none"
+
+        # 5. Save to Cache with a tier-appropriate confidence (see CONFIDENCE).
+        confidence = CONFIDENCE.get(source, 0.0)
         try:
             self.conn.execute(
                 """
@@ -139,12 +154,57 @@ class Geocoder:
                     address_raw, lat, lng, geocoder_source, geocoded_at, confidence
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                [address_raw, lat, lng, source, utcnow(), 1.0 if source in ("nominatim", "goong") else 0.0]
+                [address_raw, lat, lng, source, utcnow(), confidence]
             )
         except Exception as e:
             logger.error(f"Error writing to geocode cache: {e}")
-            
+
         return lat, lng, source
+
+    def regeocode_low_confidence(
+        self, confidence_below: float = 0.5, limit: Optional[int] = None
+    ) -> int:
+        """Re-attempt addresses that only got a low-confidence result (e.g. district centroid).
+
+        A better tier (Nominatim/Goong) may now resolve an address that previously fell back to
+        a centroid. For each low-confidence cache entry we drop the cached row (so `geocode`
+        re-resolves instead of returning the stale low-confidence hit), re-geocode, and if it
+        upgrades to an address-level tier, update the cache (done by `geocode`) and any
+        `raw_listings` rows using that address. Returns the count upgraded.
+        """
+        query = "SELECT address_raw FROM geocode_cache WHERE confidence < ?"
+        params: list = [confidence_below]
+        if limit:
+            query += " LIMIT ?"
+            params.append(limit)
+        rows = self.conn.execute(query, params).fetchall()
+        if not rows:
+            logger.info("No low-confidence geocode entries to re-attempt.")
+            return 0
+
+        upgraded = 0
+        for (address_raw,) in rows:
+            drow = self.conn.execute(
+                "SELECT district FROM raw_listings WHERE address_raw = ? LIMIT 1",
+                [address_raw],
+            ).fetchone()
+            district = drow[0] if drow else None
+            # Drop the cached low-confidence row so geocode() actually re-resolves.
+            self.conn.execute(
+                "DELETE FROM geocode_cache WHERE address_raw = ?", [address_raw]
+            )
+            lat, lng, source = self.geocode(address_raw, district)
+            if source in ("nominatim", "goong") and lat is not None and lng is not None:
+                self.conn.execute(
+                    "UPDATE raw_listings SET lat = ?, lng = ? WHERE address_raw = ?",
+                    [lat, lng, address_raw],
+                )
+                upgraded += 1
+        logger.info(
+            "Re-geocoded %d low-confidence addresses; %d upgraded to address-level.",
+            len(rows), upgraded,
+        )
+        return upgraded
 
     def geocode_pending_listings(self):
         """Geocode all listings in raw_listings table that lack coordinates."""

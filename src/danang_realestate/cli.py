@@ -9,6 +9,7 @@ from rich.logging import RichHandler
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
+from danang_realestate.pipeline.rescraper import rescrape_active_listings
 from danang_realestate.scrapers import get_scraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
 from danang_realestate.utils.http import SafeHTTPClient
@@ -67,91 +68,20 @@ def rescrape(
     """Recheck currently active listings in DuckDB for price changes and status updates."""
     console.print("[bold green]Rescraping Active Listings[/bold green] to check for price changes and validity...")
     init_db()
-    
+
     conn = get_connection()
     client = SafeHTTPClient()
     scraper = NhaTotScraper(client)
-    
+
     try:
-        # Get active listings
-        active_listings = conn.execute(
-            "SELECT listing_id, price FROM raw_listings WHERE is_active = TRUE AND source = 'nhatot'"
-        ).fetchall()
-        
-        if not active_listings:
+        result = rescrape_active_listings(conn, scraper)
+        if result.checked == 0:
             console.print("No active listings found in database to recheck.")
             return
-            
-        console.print(f"Found {len(active_listings)} active listings to check.")
-        
-        updated_count = 0
-        deactivated_count = 0
-        scraped_at = utcnow()
-        
-        for idx, (ad_id, db_price) in enumerate(active_listings):
-            console.print(f"Checking listing {idx+1}/{len(active_listings)}: {ad_id}...")
-            
-            detail = scraper.fetch_detail(ad_id)
-            if not detail:
-                # Listing is offline (deleted or expired)
-                conn.execute(
-                    "UPDATE raw_listings SET is_active = FALSE, scraped_at = ? WHERE listing_id = ? AND source = 'nhatot'",
-                    [scraped_at, ad_id]
-                )
-                deactivated_count += 1
-                console.print(f"  ❌ Listing {ad_id} is offline. Marked as inactive.")
-            else:
-                price = detail.get("price")
-                if price is not None:
-                    price = int(price)
-                    
-                if price != db_price:
-                    # Price changed! Calculate history
-                    price_change = None
-                    price_change_pct = None
-                    if price is not None and db_price is not None:
-                        price_change = price - db_price
-                        if db_price > 0:
-                            price_change_pct = float(price_change) / float(db_price)
-                            
-                    # Record in history
-                    conn.execute(
-                        """
-                        INSERT INTO listing_price_history (
-                            listing_id, source, price, price_per_sqm, observed_at,
-                            previous_price, price_change, price_change_pct
-                        ) VALUES (?, 'nhatot', ?, ?, ?, ?, ?, ?)
-                        """,
-                        [
-                            ad_id, price, 
-                            float(price)/float(detail.get("size")) if price and detail.get("size") else None,
-                            scraped_at, db_price, price_change, price_change_pct
-                        ]
-                    )
-                    
-                    # Update raw listing price and scraped timestamp
-                    conn.execute(
-                        """
-                        UPDATE raw_listings
-                        SET price = ?, price_per_sqm = ?, scraped_at = ?
-                        WHERE listing_id = ? AND source = 'nhatot'
-                        """,
-                        [
-                            price,
-                            float(price)/float(detail.get("size")) if price and detail.get("size") else None,
-                            scraped_at, ad_id
-                        ]
-                    )
-                    updated_count += 1
-                    console.print(f"  💰 Price change: {db_price} -> {price} (Recorded history)")
-                else:
-                    # Update scraped_at timestamp to mark it still active
-                    conn.execute(
-                        "UPDATE raw_listings SET scraped_at = ? WHERE listing_id = ? AND source = 'nhatot'",
-                        [scraped_at, ad_id]
-                    )
-                    
-        console.print(f"[bold green]Rescrape complete.[/bold green] Updated prices for {updated_count} ads. Marked {deactivated_count} ads offline.")
+        console.print(
+            f"[bold green]Rescrape complete.[/bold green] Checked {result.checked} ads, "
+            f"updated prices for {result.price_updated}, marked {result.deactivated} offline."
+        )
     finally:
         client.close()
         conn.close()

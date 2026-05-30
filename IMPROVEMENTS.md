@@ -57,14 +57,13 @@ This plan is ordered by leverage. Each item notes the rough effort.
    (`postgres_execute`), so Metabase never reads an empty/half-published table. See
    `PROPOSALS.md` P1 #5. (A true upsert/merge remains a future option if marts grow large.)
 
-6. **Geocoding robustness.** *(M)*
-   Add Goong rate limiting + retry/backoff, persist `confidence`, and re-geocode listings that
-   only got a district-centroid once a better tier is available. Consider batch geocoding.
+6. **Geocoding robustness.** *(M)* — ✅ **done.** Tiered `confidence` persisted + a
+   `regeocode_low_confidence()` pass that upgrades centroid rows (retry/backoff already via
+   `SafeHTTPClient`). Wired into `weekly_maintenance`. See `PROPOSALS.md` P1 #6.
 
-7. **Scheduled `rescrape`.** *(S)*
-   `daily_refresh` re-scrapes search results (catches price changes for still-listed ads + new
-   ones) but doesn't mark vanished listings inactive. Add a `rescrape` op/job (offline + price
-   detection) on its own cadence so `is_active` and `price_changes` stay accurate.
+7. **Scheduled `rescrape`.** *(S)* — ✅ **done.** `pipeline/rescraper.rescrape_active_listings`
+   (CLI + Dagster `weekly_maintenance` job, Sunday 05:00) marks vanished listings inactive and
+   records price changes. See `PROPOSALS.md` P1 #7.
 
 ## P2 — Platform & observability
 
