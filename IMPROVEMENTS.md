@@ -77,14 +77,19 @@ This plan is ordered by leverage. Each item notes the rough effort.
    weekly_maintenance; pinned Metabase + Postgres image digests. (PG is a regenerable serving
    copy, so it needs no dump.) See `PROPOSALS.md` P2 #9.
 
-10. **Observability.** *(S)* — 🟡 **partial.** Added `check_mart_health` (fails the run + Slack
-    alert if a critical mart is empty, before publish). Remaining: structured logging, run
-    metrics, drop-detection sensor. See `PROPOSALS.md` P2 #10.
+10. **Observability.** *(S)* — ✅ **done.** `check_mart_health` (fails + Slack-alerts if a
+    critical mart is empty, before publish) plus **structured JSON logging** (`utils/logging`,
+    opt-in via `LOG_JSON`) and a **drop-detection sensor** (`mart_drop_alert`): each healthy run
+    snapshots mart row counts to `mart_row_history`, and a `run_status_sensor` Slack-alerts when a
+    mart shrinks ≥30% vs the prior run (catches partial breaks the empty-guard misses). See
+    `PROPOSALS.md` P2 #10.
 
 ## P3 — Engineering hygiene
 
-11. **More tests.** *(M)* Integration test for `publish_to_postgres` (testcontainers Postgres),
-    loader/price-tracker unit tests (the price-change path), CLI smoke tests.
+11. **More tests.** *(M)* — ✅ **done.** Integration test for `publish_to_postgres`
+    (testcontainers Postgres — atomic swap, no leftover staging; self-skips without Docker),
+    loader + price-tracker unit tests (new-obs / price-change / rollback paths), and Typer CLI
+    smoke tests. See `PROPOSALS.md` P3 #11.
 12. **Typing + pre-commit.** *(S)* — ✅ **done.** mypy clean across 23 files (config + CI step)
     and a `.pre-commit-config.yaml` (ruff + mypy). See `PROPOSALS.md` P3 #12.
 13. **Config consolidation.** *(S)* Move the `PG_*` and scrape settings into `config.py`

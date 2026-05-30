@@ -38,6 +38,10 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.6",
     "mypy>=1.11",
+    # Integration test for publish_to_postgres spins up a throwaway Postgres via Docker.
+    # The test self-skips when Docker/testcontainers is unavailable.
+    "testcontainers[postgres]>=4.0",
+    "psycopg2-binary",
 ]
 
 [build-system]

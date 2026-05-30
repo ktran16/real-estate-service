@@ -137,16 +137,33 @@ snapshots; restore via `IMPORT DATABASE`) wired as a `backup_database` op in `we
 (`BACKUPS_DIR`/`BACKUP_KEEP` env). Pinned Metabase + Postgres images by **digest**. Unit-tested
 (snapshot round-trips via IMPORT; rotation) + smoke-tested against the real DB.
 
-**#10 Observability.** 🟡 **partial.** Added a `check_mart_health` op in both pipelines (between
-dbt and publish) that logs all mart row counts and **raises if a critical mart (`listings`,
+**#10 Observability.** ✅ **done.** `check_mart_health` (between dbt and publish in both
+pipelines) logs all mart row counts and **raises if a critical mart (`listings`,
 `price_by_district`) is empty** — so a broken upstream can't overwrite Metabase with empty marts,
-and the failure trips the Slack sensor. *Remaining:* structured (JSON) logging, Dagster run
-metrics, and a drop-detection sensor (alert when a row count falls materially vs the prior run).
+and the failure trips the Slack sensor. Added this round:
+- **Structured JSON logging** (`utils/logging.JsonLogFormatter` + `configure_logging`): one JSON
+  object per line, includes `extra=` fields and exception/stack info. Opt-in via `LOG_JSON=1`
+  (CLI keeps Rich output by default); idempotent so repeated config calls don't double-log.
+- **Drop-detection sensor** (`pipeline/observability` + `orchestration.mart_drop_alert`): every
+  *healthy* mart-health check snapshots row counts into a `mart_row_history` DuckDB table;
+  `detect_row_drops` compares the two most recent run snapshots and a `run_status_sensor` (on
+  `daily_refresh`/`weekly_maintenance` SUCCESS) Slack-alerts when a mart shrinks ≥30% vs the
+  prior run — catching a *partial* break that still emits some rows (which the empty-guard would
+  miss). Threshold is configurable; growth and sub-threshold churn are ignored. Unit-tested.
+*Remaining (optional):* Dagster run metrics/asset metadata; an email channel.
 
-## P3 — Hygiene (proposed)
+## P3 — Hygiene
 
-**#11 More tests:** `publish_to_postgres` integration test via testcontainers Postgres;
-loader/price-tracker unit tests (the price-change transaction path); a CLI smoke test.
+**#11 More tests. ✅ done.** Shipped: a `publish_to_postgres` **integration test** via
+**testcontainers Postgres** (`tests/test_publish_postgres_integration.py`) that publishes real
+DuckDB marts, asserts the rows land in PG and that re-publishing atomically swaps with **no
+leftover `*__staging`** tables (plus the password-required guard); it self-skips when
+Docker/`testcontainers`/`dagster` aren't available so the default suite stays hermetic. Plus
+**loader** tests (`tests/test_loader.py`: new-observation, price-change update, unchanged-noop,
+and transaction **rollback** on a failing history insert), **price-tracker** tests
+(`tests/test_price_tracker.py`: classification + `get_existing_prices` bulk/null), and **Typer CLI
+smoke tests** (`tests/test_cli.py`: help, per-command help, `transform` exit code, scrape wiring).
+`testcontainers[postgres]` + `psycopg2-binary` added to the dev group.
 **#12 Typing + pre-commit: ✅ done.** Added `mypy` (config in pyproject: `files=["src"]`,
 `ignore_missing_imports`, `no_implicit_optional`) — fixed the 18 type errors (implicit-Optional
 params, BS4 attr coercion, dict.get on Optional keys, DuckDB `fetchone()[0]` via a `_scalar_int`
@@ -172,7 +189,7 @@ manual setup step).
 5. ✅ ~~**P2 #8** (dagster-dbt)~~ — done.
 6. ✅ ~~**P2 #9** (durability: DuckDB backups + pin digests)~~ — done.
 7. ✅ ~~**P3 #12** (mypy + pre-commit)~~ — done.
-8. **P2 #10 remainder** (structured logging + drop-detection sensor → `post_slack`). *(S)*
-9. **P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests). *(M)*
+8. ✅ ~~**P2 #10 remainder** (structured logging + drop-detection sensor → `post_slack`)~~ — done.
+9. ✅ ~~**P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests)~~ — done.
 10. **P4** (richer marts, deals alerting, dashboards-as-code). *(M)*
 11. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

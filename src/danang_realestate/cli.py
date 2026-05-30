@@ -4,7 +4,6 @@ import subprocess
 
 import typer
 from rich.console import Console
-from rich.logging import RichHandler
 
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
@@ -13,17 +12,14 @@ from danang_realestate.pipeline.rescraper import rescrape_active_listings
 from danang_realestate.scrapers import get_scraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
 from danang_realestate.utils.http import SafeHTTPClient
+from danang_realestate.utils.logging import configure_logging
 from danang_realestate.utils.timeutil import utcnow
 from danang_realestate.validation.schema_validator import validate_schema
 
-# Setup rich console and logging
+# Setup rich console and logging. Honours LOG_JSON=1 for structured (JSON) output; otherwise
+# falls back to the human-friendly Rich handler for interactive CLI runs.
 console = Console()
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(console=console, rich_tracebacks=True)]
-)
+configure_logging()
 logger = logging.getLogger("danang_realestate")
 
 app = typer.Typer(help="Da Nang Real Estate Analytics CLI")

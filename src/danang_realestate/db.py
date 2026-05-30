@@ -104,6 +104,15 @@ def init_db():
             );
         """)
 
+        # Per-run mart row-count history (observability: drop detection across runs)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS mart_row_history (
+                run_at      TIMESTAMP NOT NULL,
+                mart        VARCHAR   NOT NULL,
+                row_count   BIGINT    NOT NULL
+            );
+        """)
+
         # Seed static centroids if empty
         res = conn.execute("SELECT COUNT(*) FROM district_centroids").fetchone()
         if res and res[0] == 0:

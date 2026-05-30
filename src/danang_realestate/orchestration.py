@@ -33,6 +33,7 @@ from dagster import (
     AssetKey,
     AssetSelection,
     AssetSpec,
+    DagsterRunStatus,
     DefaultScheduleStatus,
     DefaultSensorStatus,
     Definitions,
@@ -42,6 +43,7 @@ from dagster import (
     Out,
     RetryPolicy,
     RunFailureSensorContext,
+    RunStatusSensorContext,
     ScheduleDefinition,
     asset,
     define_asset_job,
@@ -49,6 +51,7 @@ from dagster import (
     multi_asset,
     op,
     run_failure_sensor,
+    run_status_sensor,
 )
 from dagster_dbt import DbtCliResource, DbtProject, dbt_assets
 
@@ -58,6 +61,7 @@ from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.backup import backup_duckdb
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
+from danang_realestate.pipeline.observability import detect_row_drops, record_mart_counts
 from danang_realestate.pipeline.rescraper import rescrape_active_listings
 from danang_realestate.scrapers import get_scraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
@@ -176,6 +180,8 @@ def _run_check_mart_health(context) -> None:
                 f"Critical marts unexpectedly empty: {empty_critical} (counts={counts}). "
                 "Refusing to publish empty marts to the Postgres serving DB."
             )
+        # Snapshot the (healthy) counts so the drop-detection sensor can compare runs.
+        record_mart_counts(conn, counts)
     finally:
         conn.close()
 
@@ -418,10 +424,40 @@ def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
     post_slack(f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}")
 
 
+@run_status_sensor(
+    run_status=DagsterRunStatus.SUCCESS,
+    monitored_jobs=[daily_refresh, weekly_maintenance],
+    default_status=DefaultSensorStatus.RUNNING,
+)
+def mart_drop_alert(context: RunStatusSensorContext) -> None:
+    """After a successful refresh, alert if any mart shrank materially vs the previous run.
+
+    The empty-mart guard only catches a mart going to zero; this catches a partial break that
+    still produces some rows but far fewer than usual. No-op if SLACK_WEBHOOK_URL is unset.
+    """
+    conn = get_connection()
+    try:
+        drops = detect_row_drops(conn)
+    finally:
+        conn.close()
+    if not drops:
+        return
+    lines = [
+        f"• *{d['mart']}*: {d['previous']} → {d['current']} ({d['drop_pct']:.0%} drop)"
+        for d in drops
+    ]
+    run = context.dagster_run
+    context.log.warning("Mart row-count drops detected: %s", drops)
+    post_slack(
+        f":chart_with_downwards_trend: *{run.job_name}* mart row-count drop "
+        f"(run {run.run_id[:8]}):\n" + "\n".join(lines)
+    )
+
+
 defs = Definitions(
     assets=[scraped_listings, geocoded_raw, dbt_models, published_marts],
     jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
     schedules=[daily_refresh_schedule, weekly_maintenance_schedule, schema_drift_schedule],
-    sensors=[pipeline_failure_alert],
+    sensors=[pipeline_failure_alert, mart_drop_alert],
     resources={"dbt": dbt_resource},
 )
