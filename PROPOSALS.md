@@ -191,9 +191,19 @@ Tests: schema `not_null`/`accepted_values`/`unique` + 3 singular tests (percenti
 DOM non-negative, shares in [0,1]). `dbt build PASS=61`. *Future:* a true time-series
 broker-concentration mart once enough daily snapshots accumulate.
 
-**#15 Deals alerting:** a `deals` mart flagging listings materially below their ward median +
-a notification sensor (now unlocked — `price_per_sqm_by_ward` gives the ward benchmark to compare
-against). **#16 Dashboards as code:** export Metabase dashboards via the serialization API so
+**#15 Deals alerting. ✅ done.** `deals` mart (`dbt/models/marts/deals.sql`) flags active
+listings whose `price_per_sqm` is ≥ `deal_discount_threshold` (default 20%) below the comparable
+benchmark — the district × property × transaction median from `price_by_district`, guarded by
+`deal_min_comparables` (default 3) so thin groups don't produce false signals. (District rather
+than ward because wards are too sparse for a stable benchmark; thresholds are dbt vars.) Added to
+the publish `MARTS`. `pipeline/deals.detect_new_deals`/`record_deal_alerts` diff the mart against
+a `deal_alerts` DuckDB table, and a `deals_alert` `run_status_sensor` (on daily/weekly SUCCESS)
+posts the new ones to Slack once each (highest discount first, capped at 10/message). A CI seed
+deal (listing 1014, 31% below benchmark) keeps it exercised; +7 unit tests + a singular dbt test
+(`assert_deals_below_benchmark`). `dbt build PASS=67`. *Future:* re-alert when a discount deepens
+materially; per-ward benchmark once wards have enough listings.
+
+**#16 Dashboards as code:** export Metabase dashboards via the serialization API so
 they're version-controlled (removes the only manual setup step).
 
 ---
@@ -209,5 +219,6 @@ they're version-controlled (removes the only manual setup step).
 8. ✅ ~~**P2 #10 remainder** (structured logging + drop-detection sensor → `post_slack`)~~ — done.
 9. ✅ ~~**P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests)~~ — done.
 10. ✅ ~~**P4 #14** (richer marts)~~ — done.
-11. **P4 #15/#16** (deals-alerting mart + sensor; dashboards-as-code). *(M)*
-12. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
+11. ✅ ~~**P4 #15** (deals-alerting mart + sensor)~~ — done.
+12. **P4 #16** (dashboards-as-code via Metabase serialization API). *(M)*
+13. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

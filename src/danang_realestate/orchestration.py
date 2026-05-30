@@ -59,6 +59,7 @@ from danang_realestate.alerting import post_slack
 from danang_realestate.config import settings
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.backup import backup_duckdb
+from danang_realestate.pipeline.deals import detect_new_deals, record_deal_alerts
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
 from danang_realestate.pipeline.observability import detect_row_drops, record_mart_counts
@@ -95,6 +96,7 @@ MARTS = [
     "listing_days_on_market",
     "listing_velocity",
     "broker_concentration",
+    "deals",
 ]
 
 # Marts that should never be empty after a successful run (an empty one means the pipeline
@@ -464,10 +466,45 @@ def mart_drop_alert(context: RunStatusSensorContext) -> None:
     )
 
 
+@run_status_sensor(
+    run_status=DagsterRunStatus.SUCCESS,
+    monitored_jobs=[daily_refresh, weekly_maintenance],
+    default_status=DefaultSensorStatus.RUNNING,
+)
+def deals_alert(context: RunStatusSensorContext) -> None:
+    """After a successful refresh, Slack-alert on newly-found under-market deals (once each).
+
+    Reads the `deals` mart, diffs against the `deal_alerts` tracking table, posts the new ones,
+    and records them so they aren't re-announced. No-op if SLACK_WEBHOOK_URL is unset.
+    """
+    conn = get_connection()
+    try:
+        new_deals = detect_new_deals(conn)
+        if new_deals:
+            record_deal_alerts(conn, new_deals)
+    finally:
+        conn.close()
+    if not new_deals:
+        return
+    context.log.info("Found %d new under-market deal(s).", len(new_deals))
+    shown = new_deals[:10]
+    lines = [
+        f"• *{d['district']} / {d['ward']}* — {d['discount_pct']:.0%} below benchmark "
+        f"({int(d['price']):,}đ): {d.get('url') or d['listing_id']}"
+        for d in shown
+    ]
+    more = f"\n…and {len(new_deals) - len(shown)} more." if len(new_deals) > len(shown) else ""
+    post_slack(
+        f":moneybag: {len(new_deals)} new under-market deal(s) detected:\n"
+        + "\n".join(lines)
+        + more
+    )
+
+
 defs = Definitions(
     assets=[scraped_listings, geocoded_raw, dbt_models, published_marts],
     jobs=[daily_refresh, weekly_maintenance, schema_drift_check],
     schedules=[daily_refresh_schedule, weekly_maintenance_schedule, schema_drift_schedule],
-    sensors=[pipeline_failure_alert, mart_drop_alert],
+    sensors=[pipeline_failure_alert, mart_drop_alert, deals_alert],
     resources={"dbt": dbt_resource},
 )

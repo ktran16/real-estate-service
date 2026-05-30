@@ -127,3 +127,19 @@ models:
       - name: broker_share
         tests:
           - not_null
+
+  - name: deals
+    description: Active listings priced materially below the comparable district benchmark.
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+      - name: discount_pct
+        tests:
+          - not_null
+      - name: benchmark_price_per_sqm
+        tests:
+          - not_null
+      - name: comparable_count
+        tests:
+          - not_null

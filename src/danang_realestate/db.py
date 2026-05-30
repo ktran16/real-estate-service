@@ -113,6 +113,17 @@ def init_db():
             );
         """)
 
+        # Deals already announced (so the deal-alert sensor fires once per listing)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS deal_alerts (
+                listing_id    BIGINT    NOT NULL,
+                source        VARCHAR   NOT NULL,
+                discount_pct  DOUBLE,
+                alerted_at    TIMESTAMP NOT NULL,
+                PRIMARY KEY (listing_id, source)
+            );
+        """)
+
         # Seed static centroids if empty
         res = conn.execute("SELECT COUNT(*) FROM district_centroids").fetchone()
         if res and res[0] == 0:

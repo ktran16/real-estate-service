@@ -4,6 +4,11 @@ config-version: 2
 
 profile: 'danang_realestate'
 
+# Tunable thresholds for the `deals` mart (under-market listing detection).
+vars:
+  deal_discount_threshold: 0.20  # flag listings >= 20% below the comparable benchmark
+  deal_min_comparables: 3        # require >= 3 comparables for a trustworthy benchmark
+
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]

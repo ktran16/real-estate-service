@@ -103,7 +103,11 @@ This plan is ordered by leverage. Each item notes the rough effort.
     `broker_concentration` (broker share + top-account share per district). +schema tests + 3
     singular tests (percentile ordering, non-negative DOM, shares in [0,1]) → `dbt build PASS=61`.
     See `PROPOSALS.md` P4 #14.
-15. **Alerting on deals:** flag listings priced materially below their ward's median (a "deals"
-    mart + a notification sensor).
+15. **Alerting on deals.** *(M)* — ✅ **done.** `deals` dbt mart flags active listings priced
+    ≥20% below their comparable district benchmark price-per-sqm (`deal_discount_threshold` /
+    `deal_min_comparables` dbt vars), published to Postgres. `pipeline/deals` + a Dagster
+    `deals_alert` `run_status_sensor` Slack-alerts on *new* deals (diffed against a `deal_alerts`
+    tracking table so each fires once). +7 unit tests + a singular dbt test. See `PROPOSALS.md`
+    P4 #15.
 16. **Dashboards as code:** export Metabase dashboards via the serialization API so they're
     version-controlled and reproducible (removes the only manual setup step).
