@@ -13,11 +13,15 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 ## P0 — Highest leverage
 
-1. **Real `batdongsan.com.vn` scraper (Playwright).** *(L)* — 🟡 **parsing shipped; live run
-   blocked.** Vietnamese price/area parsing, card extraction, `from_batdongsan`, and the
-   Playwright fetch scaffold are implemented + unit-tested (`scrapers/batdongsan.py`,
-   `tests/test_batdongsan.py`). The Cloudflare-cleared live crawl needs a real browser +
-   residential proxy — see `PROPOSALS.md` "P0 #1" for the bypass/selector-validation plan.
+1. **Real `batdongsan.com.vn` scraper (Playwright).** *(L)* — 🟡 **parsing + challenge-detection
+   shipped; only the live crawl is blocked.** Vietnamese price/area parsing, card extraction,
+   `from_batdongsan`, the Playwright fetch scaffold, AND Cloudflare-**challenge detection**
+   (`looks_like_challenge` + `CloudflareChallenge`: a blocked fetch now raises loudly instead of
+   silently reading as "0 listings"; a stale-selector page is logged distinctly) are implemented
+   + unit-tested against a captured challenge fixture (`scrapers/batdongsan.py`,
+   `tests/test_batdongsan.py`, `tests/fixtures/batdongsan_cloudflare_challenge.html`). Re-verified
+   live 2026-05-30: HTTP 403 + Cloudflare challenge. The cleared live crawl needs a real browser +
+   residential proxy (not available in-sandbox) — see `PROPOSALS.md` "P0 #1".
    The placeholder exists and the registry/`--source` plumbing is ready. batdongsan is
    Cloudflare-protected (verified HTTP 403 + challenge), so it needs a real browser:
    - Add a `playwright`-based scraper: launch chromium (stealth UA/viewport), load the

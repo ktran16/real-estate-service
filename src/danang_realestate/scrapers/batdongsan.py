@@ -42,6 +42,37 @@ LISTING_PATHS = {
 
 _NUM = r"(\d+(?:[.,]\d+)?)"
 
+# Substrings that mark a Cloudflare interstitial / challenge page (i.e. the fetch was NOT
+# cleared). Used to distinguish "blocked by Cloudflare" from "genuinely no listings".
+_CHALLENGE_MARKERS = (
+    "just a moment",
+    "challenge-platform",
+    "cf-chl",
+    "cf-browser-verification",
+    "/cdn-cgi/challenge",
+    "attention required",
+    "enable javascript and cookies to continue",
+)
+
+
+class CloudflareChallenge(RuntimeError):
+    """Raised when batdongsan returns an uncleared Cloudflare challenge instead of listings."""
+
+
+def looks_like_challenge(html: Optional[str]) -> bool:
+    """True if `html` is a Cloudflare challenge/interstitial rather than a real page.
+
+    A real listing index is tens of KB with card markup; a challenge page is small and carries
+    one of the `_CHALLENGE_MARKERS`. We only flag when a marker is present AND no listing cards
+    are — so a (future) cleared page that happens to mention Cloudflare isn't misread.
+    """
+    if not html:
+        return True
+    lowered = html.lower()
+    if not any(marker in lowered for marker in _CHALLENGE_MARKERS):
+        return False
+    return 'class="re__card' not in lowered and "js__card" not in lowered
+
 
 def _to_float(num: str) -> float:
     """Parse a Vietnamese-formatted number: '.' = thousands, ',' = decimal. '3,5' -> 3.5."""
@@ -179,8 +210,24 @@ class BatDongSanScraper(BaseScraper):
             for page in range(1, self.MAX_PAGES + 1):
                 url = f"{BASE_URL}{path}" + (f"/p{page}" if page > 1 else "")
                 html = self._fetch_rendered(url)
+                # A challenge page parses to 0 cards too — fail loudly so a blocked run is never
+                # mistaken for "no listings" (which would silently wipe the source's data).
+                if looks_like_challenge(html):
+                    raise CloudflareChallenge(
+                        f"batdongsan returned an uncleared Cloudflare challenge at {url}. "
+                        "A real browser fingerprint + (likely) a residential proxy are needed; "
+                        "see PROPOSALS.md P0 #1."
+                    )
                 cards = parse_listing_cards(html, transaction_type=tx)
                 if not cards:
+                    if page == 1:
+                        # Not a challenge, yet the first page yielded nothing → the selectors
+                        # are almost certainly stale, NOT a genuinely empty result set.
+                        logger.warning(
+                            "batdongsan %s page 1 parsed 0 cards but is not a Cloudflare "
+                            "challenge — selectors likely stale; re-validate against fresh HTML.",
+                            tx,
+                        )
                     break  # past the last page (or selectors need re-validation)
                 for card in cards:
                     if card["listing_id"] in seen:

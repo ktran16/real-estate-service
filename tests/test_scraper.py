@@ -101,7 +101,9 @@ class TestScraperRegistry(unittest.TestCase):
         </div>
         """
         scraper = BatDongSanScraper()
-        with patch.object(scraper, "_fetch_rendered", side_effect=[page1, ""]):
+        # page 2 is a valid empty page (an empty string now reads as a blocked/challenge fetch).
+        empty = "<html><body>no more results</body></html>"
+        with patch.object(scraper, "_fetch_rendered", side_effect=[page1, empty]):
             listings = scraper.scrape(transaction_type="sale", limit=10)
 
         self.assertEqual([listing.listing_id for listing in listings], [111, 222])

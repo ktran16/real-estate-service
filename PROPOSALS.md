@@ -23,11 +23,19 @@ the items that remain. Items already shipped are marked ✅ with where the code 
 403 + JS challenge). Clearing it needs a real browser fingerprint and, for sustained crawls,
 residential IPs — neither available in this sandbox.
 
+**Shipped since (challenge-detection hardening):** `looks_like_challenge()` +
+`CloudflareChallenge` — `scrape()` now **raises** on an un-cleared Cloudflare page (instead of
+silently returning 0 listings, which would wipe the source), and logs a distinct "selectors
+likely stale" warning when page 1 parses 0 cards but is *not* a challenge. Unit-tested against a
+captured challenge fixture (`tests/fixtures/batdongsan_cloudflare_challenge.html`). This closes
+step 1's "treat 0 cards as stale, not end-of-results". Re-verified live (2026-05-30): HTTP 403 +
+Cloudflare challenge — the live crawl remains the only blocked piece.
+
 **Plan to take it live (in priority order):**
 1. **Selector re-validation first.** The CSS selectors match batdongsan's *documented* card
    markup but the site rotates classes. Capture one Cloudflare-cleared page, save it as a
-   fixture, and diff against `tests/test_batdongsan.py`'s assumptions before any crawl. Treat
-   a `parse_listing_cards` returning 0 cards as "selectors stale", not "end of results".
+   fixture, and diff against `tests/test_batdongsan.py`'s assumptions before any crawl.
+   (`looks_like_challenge` already distinguishes a challenge from genuinely-empty/stale results.)
 2. **Cloudflare bypass**, cheapest → strongest:
    - `playwright` + `playwright-stealth` (patches the obvious `navigator.webdriver` tells).
    - If still challenged: a maintained anti-detect runtime — `undetected-playwright` or the

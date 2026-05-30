@@ -8,15 +8,23 @@ HTML; see scrapers/batdongsan.py and PROPOSALS.md.
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
 from danang_realestate.models import NormalizedListing
 from danang_realestate.scrapers.batdongsan import (
+    BatDongSanScraper,
+    CloudflareChallenge,
+    looks_like_challenge,
     parse_area_sqm,
     parse_listing_cards,
     parse_price_vnd,
 )
+
+CHALLENGE_HTML = (
+    Path(__file__).parent / "fixtures" / "batdongsan_cloudflare_challenge.html"
+).read_text()
 
 FIXTURE_HTML = """
 <html><body>
@@ -85,6 +93,50 @@ def test_parse_listing_cards_extracts_fields():
 
     # negotiable price -> None, but the card is still emitted.
     assert cards[2]["price"] is None
+
+
+def test_looks_like_challenge_detects_cloudflare():
+    assert looks_like_challenge(CHALLENGE_HTML) is True
+    assert looks_like_challenge("") is True
+    assert looks_like_challenge(None) is True
+
+
+def test_looks_like_challenge_false_on_real_cards():
+    # A real listing page (has cards) is never a challenge, even if it mentions Cloudflare.
+    assert looks_like_challenge(FIXTURE_HTML) is False
+    assert looks_like_challenge(FIXTURE_HTML + "<!-- served by cloudflare -->") is False
+
+
+def test_looks_like_challenge_false_on_empty_real_page():
+    # An empty but legitimate page (no markers) is "no results", not a challenge.
+    assert looks_like_challenge("<html><body>Không tìm thấy kết quả</body></html>") is False
+
+
+def _scraper_returning(html):
+    scraper = BatDongSanScraper()
+    scraper._fetch_rendered = lambda url: html  # type: ignore[method-assign]
+    return scraper
+
+
+def test_scrape_raises_on_cloudflare_challenge():
+    scraper = _scraper_returning(CHALLENGE_HTML)
+    with pytest.raises(CloudflareChallenge, match="Cloudflare"):
+        scraper.scrape(transaction_type="sale")
+
+
+def test_scrape_returns_empty_on_genuinely_empty_page():
+    # Not a challenge, no cards → clean "no results", no exception.
+    scraper = _scraper_returning("<html><body>no listings here</body></html>")
+    assert scraper.scrape(transaction_type="sale") == []
+
+
+def test_scrape_parses_cards_from_rendered_html():
+    scraper = BatDongSanScraper()
+    # one page of cards, then a valid empty page (not a challenge) → stop
+    pages = iter([FIXTURE_HTML, "<html><body>no more results</body></html>"])
+    scraper._fetch_rendered = lambda url: next(pages)  # type: ignore[method-assign]
+    listings = scraper.scrape(transaction_type="sale", limit=10)
+    assert {listing.listing_id for listing in listings} == {12345678, 87654321, 999}
 
 
 def test_from_batdongsan_normalizes():
