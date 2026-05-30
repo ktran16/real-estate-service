@@ -11,7 +11,7 @@ URL       := http://localhost:3001
 .DEFAULT_GOAL := help
 
 .PHONY: help setup driver up down stop start restart logs ps status health \
-        fix-perms shell clean
+        fix-perms shell clean dashboards dashboards-export dashboards-validate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -54,6 +54,15 @@ fix-perms: ## Make plugins/ + metabase-data/ writable by the metabase user (uid 
 	docker exec -u root $(CONTAINER) chmod 777 /plugins /metabase-data
 	$(COMPOSE) restart
 	@echo "Permissions fixed and Metabase restarted; run 'make health' to confirm the driver loaded."
+
+dashboards: ## Provision dashboards from YAML specs (needs MB_USERNAME/MB_PASSWORD or MB_API_KEY)
+	cd .. && uv run --extra metabase python metabase/provision.py provision
+
+dashboards-export: ## Pull live dashboards back into the YAML specs
+	cd .. && uv run --extra metabase python metabase/provision.py export
+
+dashboards-validate: ## Validate the dashboard specs parse (no server needed)
+	cd .. && uv run --extra metabase python metabase/provision.py validate
 
 shell: ## Open a root shell inside the container
 	docker exec -it -u root $(CONTAINER) /bin/sh

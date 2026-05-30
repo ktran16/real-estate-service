@@ -1,0 +1,15 @@
+# Dashboards-as-code config. `metabase/provision.py` reads this to (re)create the
+# Metabase collection + dashboards from version-controlled specs, so the dashboards
+# never have to be hand-built in the UI.
+#
+#   database:   display name of the Postgres "serving" DB connection in Metabase
+#               (the one publishing the marts — add it once in the UI, or let
+#               `provision.py --create-database` create it from env).
+#   collection: Metabase collection the dashboards/cards live in (created if absent).
+#   dashboards: spec files (in this directory) to provision, in order.
+database: Da Nang Marts
+collection: Da Nang Real Estate
+dashboards:
+  - market_overview.yml
+  - trends_activity.yml
+  - brokers_deals.yml

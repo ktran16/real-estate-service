@@ -23,6 +23,8 @@ dependencies = [
 [project.optional-dependencies]
 curl-cffi = ["curl_cffi"]
 playwright = ["playwright"]
+# Metabase dashboards-as-code tool (metabase/provision.py); httpx is already a core dep.
+metabase = ["pyyaml"]
 dagster = [
     "dagster",
     "dagster-webserver",

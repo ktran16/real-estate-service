@@ -1,0 +1,42 @@
+name: Market Overview
+description: >
+  Listing supply and price levels across Da Nang districts and wards.
+  Sourced from the price_by_district / price_per_sqm_by_ward / listings marts.
+cards:
+  - name: Active listings
+    display: scalar
+    query: SELECT COUNT(*) AS active_listings FROM listings WHERE is_active
+    layout: {row: 0, col: 0, size_x: 4, size_y: 3}
+
+  - name: Districts covered
+    display: scalar
+    query: SELECT COUNT(DISTINCT district) AS districts FROM price_by_district
+    layout: {row: 3, col: 0, size_x: 4, size_y: 3}
+
+  - name: Active listings by district
+    display: bar
+    query: |
+      SELECT district, SUM(listing_count) AS listings
+      FROM price_by_district
+      GROUP BY 1
+      ORDER BY listings DESC
+    layout: {row: 0, col: 4, size_x: 8, size_y: 6}
+
+  - name: Median sale price by district & property type
+    display: table
+    query: |
+      SELECT district, property_type, median_price, listing_count
+      FROM price_by_district
+      WHERE transaction_type = 'sale'
+      ORDER BY district, median_price DESC
+    layout: {row: 6, col: 0, size_x: 6, size_y: 7}
+
+  - name: Most expensive wards (median price / m², sale)
+    display: table
+    query: |
+      SELECT district, ward, median_price_per_sqm, listing_count
+      FROM price_per_sqm_by_ward
+      WHERE transaction_type = 'sale'
+      ORDER BY median_price_per_sqm DESC
+      LIMIT 15
+    layout: {row: 6, col: 6, size_x: 6, size_y: 7}

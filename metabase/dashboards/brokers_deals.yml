@@ -1,0 +1,37 @@
+name: Brokers & Deals
+description: >
+  Who is selling (broker concentration + top accounts) and where the bargains are
+  (listings priced materially below their district benchmark).
+cards:
+  - name: Broker concentration by district
+    display: table
+    query: |
+      SELECT district,
+             active_listings,
+             broker_listings,
+             ROUND(broker_share * 100, 1)      AS broker_pct,
+             distinct_accounts,
+             ROUND(top_account_share * 100, 1) AS top_account_pct
+      FROM broker_concentration
+      ORDER BY broker_share DESC
+    layout: {row: 0, col: 0, size_x: 6, size_y: 6}
+
+  - name: Top broker accounts
+    display: table
+    query: |
+      SELECT account_name, active_listing_count, avg_listing_price
+      FROM broker_listings
+      ORDER BY active_listing_count DESC
+      LIMIT 20
+    layout: {row: 0, col: 6, size_x: 6, size_y: 6}
+
+  - name: Under-market deals
+    display: table
+    query: |
+      SELECT district, ward, title, price,
+             ROUND(discount_pct * 100, 1) AS discount_pct,
+             benchmark_price_per_sqm, url
+      FROM deals
+      ORDER BY discount_pct DESC
+      LIMIT 25
+    layout: {row: 6, col: 0, size_x: 12, size_y: 7}

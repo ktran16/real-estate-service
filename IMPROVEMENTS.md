@@ -109,5 +109,9 @@ This plan is ordered by leverage. Each item notes the rough effort.
     `deals_alert` `run_status_sensor` Slack-alerts on *new* deals (diffed against a `deal_alerts`
     tracking table so each fires once). +7 unit tests + a singular dbt test. See `PROPOSALS.md`
     P4 #15.
-16. **Dashboards as code:** export Metabase dashboards via the serialization API so they're
-    version-controlled and reproducible (removes the only manual setup step).
+16. **Dashboards as code.** *(M)* — ✅ **done.** Three dashboards (Market Overview / Trends &
+    Activity / Brokers & Deals) defined as version-controlled YAML specs under
+    `metabase/dashboards/` and applied via the Metabase REST API by `metabase/provision.py`
+    (idempotent provision + `export` round-trip + `validate`). OSS Metabase has no EE
+    serialization API, so this uses the REST API instead. Removes the manual UI build step;
+    +13 unit tests (mocked httpx). See `PROPOSALS.md` P4 #16.

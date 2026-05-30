@@ -1,0 +1,44 @@
+name: Trends & Activity
+description: >
+  How prices and supply move over time — weekly price trend, new-vs-removed
+  velocity, days-on-market, and recent price changes.
+cards:
+  - name: Weekly median sale price by district
+    display: line
+    query: |
+      SELECT week_start, district, median_price
+      FROM price_trend
+      WHERE transaction_type = 'sale'
+      ORDER BY week_start
+    layout: {row: 0, col: 0, size_x: 12, size_y: 6}
+
+  - name: New vs removed listings per week
+    display: bar
+    query: |
+      SELECT week_start,
+             SUM(new_listings)     AS new_listings,
+             SUM(removed_listings) AS removed_listings
+      FROM listing_velocity
+      GROUP BY week_start
+      ORDER BY week_start
+    layout: {row: 6, col: 0, size_x: 6, size_y: 6}
+
+  - name: Days on market distribution
+    display: bar
+    query: |
+      SELECT dom_bucket, COUNT(*) AS listings
+      FROM listing_days_on_market
+      GROUP BY dom_bucket
+      ORDER BY MIN(days_on_market)
+    layout: {row: 6, col: 6, size_x: 6, size_y: 6}
+
+  - name: Recent price changes
+    display: table
+    query: |
+      SELECT observed_at, district, title,
+             previous_price, current_price,
+             ROUND(price_change_pct * 100, 1) AS change_pct
+      FROM price_changes
+      ORDER BY observed_at DESC
+      LIMIT 25
+    layout: {row: 12, col: 0, size_x: 12, size_y: 7}

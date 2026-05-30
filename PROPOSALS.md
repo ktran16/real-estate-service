@@ -203,8 +203,19 @@ deal (listing 1014, 31% below benchmark) keeps it exercised; +7 unit tests + a s
 (`assert_deals_below_benchmark`). `dbt build PASS=67`. *Future:* re-alert when a discount deepens
 materially; per-ward benchmark once wards have enough listings.
 
-**#16 Dashboards as code:** export Metabase dashboards via the serialization API so
-they're version-controlled (removes the only manual setup step).
+**#16 Dashboards as code. ✅ done.** Three dashboards are version-controlled as YAML specs
+(`metabase/dashboards/{config,market_overview,trends_activity,brokers_deals}.yml` — native-SQL
+cards over the published marts) and applied by `metabase/provision.py` via the Metabase REST API.
+OSS Metabase doesn't expose the EE serialization (serdes) API, so the tool uses the REST API
+instead: it authenticates (admin user/password or `MB_API_KEY`), ensures the `Da Nang Marts` PG
+connection (optionally `--create-database` from `PG_*`) + the `Da Nang Real Estate` collection,
+then **idempotently** upserts each card + dashboard (matched by name → updated in place, so
+re-running converges instead of duplicating). `provision validate` checks specs offline;
+`provision export` pulls the live dashboards back into the YAML (so a UI tweak can be captured to
+git). Makefile targets `dashboards` / `dashboards-export` / `dashboards-validate`; `pyyaml` lives
+in a `metabase` optional extra. +13 unit tests via a stateful httpx mock (provision idempotency,
+create-db, export round-trip, auth). *Note:* not runnable from this sandbox without the user's
+Metabase admin credentials — validated structurally via the mock.
 
 ---
 
@@ -220,5 +231,5 @@ they're version-controlled (removes the only manual setup step).
 9. ✅ ~~**P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests)~~ — done.
 10. ✅ ~~**P4 #14** (richer marts)~~ — done.
 11. ✅ ~~**P4 #15** (deals-alerting mart + sensor)~~ — done.
-12. **P4 #16** (dashboards-as-code via Metabase serialization API). *(M)*
+12. ✅ ~~**P4 #16** (dashboards-as-code via the Metabase REST API)~~ — done.
 13. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

@@ -534,6 +534,9 @@ dagster = [
     { name = "dagster-duckdb" },
     { name = "dagster-webserver" },
 ]
+metabase = [
+    { name = "pyyaml" },
+]
 playwright = [
     { name = "playwright" },
 ]
@@ -565,11 +568,12 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
+    { name = "pyyaml", marker = "extra == 'metabase'" },
     { name = "rich" },
     { name = "tenacity" },
     { name = "typer" },
 ]
-provides-extras = ["curl-cffi", "playwright", "dagster"]
+provides-extras = ["curl-cffi", "playwright", "metabase", "dagster"]
 
 [package.metadata.requires-dev]
 dev = [
