@@ -31,9 +31,11 @@ jobs:
       - name: Validate Dagster definitions
         run: uv run dagster definitions validate -m danang_realestate.orchestration
 
-      - name: Initialize empty DuckDB schema
-        run: uv run python -c "from danang_realestate.db import init_db; init_db()"
-
-      - name: dbt build (run models + data tests on empty schema)
+      - name: dbt seed (load CI fixtures into the raw_* source tables)
         working-directory: dbt
-        run: uv run dbt build --profiles-dir .
+        run: uv run dbt seed --target ci --profiles-dir .
+
+      - name: dbt build (models + data tests on realistic seeded data)
+        working-directory: dbt
+        # Seeds already loaded above; exclude them so they aren't re-run.
+        run: uv run dbt build --target ci --exclude resource_type:seed --profiles-dir .

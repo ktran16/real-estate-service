@@ -47,15 +47,15 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 ## P1 — Data quality & correctness
 
-4. **dbt source freshness + tests in CI with seed data.** *(M)*
-   Add `dbt source freshness` (raw_listings.scraped_at) to catch a stalled pipeline. Ship a
-   small seed dataset so CI runs the marts/tests against realistic rows (today CI builds on an
-   empty schema — it proves SQL executes but not the aggregation logic).
+4. **dbt source freshness + tests in CI with seed data.** *(M)* — ✅ **done.** Added a
+   `freshness:` block on `raw_listings` and `dbt/seeds/*` gated to a `ci` target; CI now builds
+   marts/tests on realistic seeded rows (PASS=39). See `PROPOSALS.md` P1 #4. *Remaining:* wire
+   `dbt source freshness` into a monitoring schedule.
 
-5. **Incremental publish to Postgres.** *(M)*
-   `publish_to_postgres` drops+recreates whole tables each run — fine now, but causes brief
-   empty windows and won't scale. Switch to upsert/merge (or write to a staging schema then
-   atomically swap) so Metabase never reads a half-published table.
+5. **Incremental publish to Postgres.** *(M)* — ✅ **done (atomic swap).** `publish_to_postgres`
+   builds `<mart>__staging` tables then swaps all marts in one native Postgres transaction
+   (`postgres_execute`), so Metabase never reads an empty/half-published table. See
+   `PROPOSALS.md` P1 #5. (A true upsert/merge remains a future option if marts grow large.)
 
 6. **Geocoding robustness.** *(M)*
    Add Goong rate limiting + retry/backoff, persist `confidence`, and re-geocode listings that

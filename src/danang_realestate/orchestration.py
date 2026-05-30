@@ -129,10 +129,14 @@ def run_dbt(context) -> None:
 
 @op(ins={"start": In(Nothing)}, retry_policy=_NET_RETRY)
 def publish_to_postgres(context) -> None:
-    """Copy the dbt marts from DuckDB into the Postgres serving DB (what Metabase reads).
+    """Publish the dbt marts to the Postgres serving DB (what Metabase reads) atomically.
 
-    Uses DuckDB's native `postgres` extension to ATTACH Postgres and rewrite each mart
-    table, so Metabase serves a fresh copy without ever opening the DuckDB file.
+    Uses DuckDB's native `postgres` extension to ATTACH Postgres. Each mart is written to a
+    `<mart>__staging` table first; then ALL marts are swapped into place inside a single
+    native Postgres transaction (DROP old + RENAME staging → final). This removes the brief
+    empty-table window the previous drop-then-recreate had: Metabase always reads either the
+    full previous marts or the full new ones, never an empty or half-published table. Metabase
+    never opens the DuckDB file, so no single-writer dance.
     """
     if not PG_PASSWORD:
         raise RuntimeError(
@@ -145,7 +149,10 @@ def publish_to_postgres(context) -> None:
         dsn = f"host={PG_HOST} port={PG_PORT} dbname={PG_DB} user={PG_USER} password={PG_PASSWORD}"
         conn.execute(f"ATTACH '{dsn}' AS pg (TYPE postgres)")
         try:
+            # 1) Build every present mart into a fresh staging table. If anything here
+            #    fails, the live tables are untouched (we haven't swapped yet).
             published = []
+            swap_stmts = []
             for mart in MARTS:
                 present = conn.execute(
                     "SELECT count(*) FROM duckdb_tables() "
@@ -155,14 +162,31 @@ def publish_to_postgres(context) -> None:
                 if not present:
                     context.log.info("Mart '%s' not found in DuckDB; skipping.", mart)
                     continue
-                # CREATE OR REPLACE isn't supported on attached Postgres; drop + create.
-                conn.execute(f'DROP TABLE IF EXISTS pg.{PG_SCHEMA}."{mart}"')
-                conn.execute(f'CREATE TABLE pg.{PG_SCHEMA}."{mart}" AS SELECT * FROM "{mart}"')
-                n = conn.execute(f'SELECT count(*) FROM pg.{PG_SCHEMA}."{mart}"').fetchone()[0]
+                staging = f"{mart}__staging"
+                conn.execute(f'DROP TABLE IF EXISTS pg.{PG_SCHEMA}."{staging}"')
+                conn.execute(
+                    f'CREATE TABLE pg.{PG_SCHEMA}."{staging}" AS SELECT * FROM "{mart}"'
+                )
+                n = conn.execute(
+                    f'SELECT count(*) FROM pg.{PG_SCHEMA}."{staging}"'
+                ).fetchone()[0]
                 published.append(f"{mart}={n}")
+                swap_stmts.append(f'DROP TABLE IF EXISTS {PG_SCHEMA}."{mart}";')
+                swap_stmts.append(
+                    f'ALTER TABLE {PG_SCHEMA}."{staging}" RENAME TO "{mart}";'
+                )
+
+            # 2) Swap all staging tables into place in ONE Postgres transaction, executed
+            #    natively on the server (postgres_execute) so the cutover is atomic.
+            if swap_stmts:
+                swap_sql = "BEGIN;\n" + "\n".join(swap_stmts) + "\nCOMMIT;"
+                conn.execute("CALL postgres_execute('pg', ?)", [swap_sql])
         finally:
             conn.execute("DETACH pg")
-        context.log.info("Published marts to Postgres %s:%s → %s", PG_HOST, PG_PORT, ", ".join(published) or "(none)")
+        context.log.info(
+            "Published marts to Postgres %s:%s (atomic swap) → %s",
+            PG_HOST, PG_PORT, ", ".join(published) or "(none)",
+        )
     finally:
         conn.close()
 

@@ -5,3 +5,9 @@ danang_realestate:
       type: duckdb
       path: "../data/danang.duckdb"
       schema: main
+    # CI target: a throwaway DuckDB file built from the seed fixtures (seeds are enabled
+    # only when target.name == 'ci'). Keeps CI off the real dev/prod database.
+    ci:
+      type: duckdb
+      path: "../data/ci.duckdb"
+      schema: main

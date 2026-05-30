@@ -9,6 +9,13 @@ sources:
     tables:
       - name: raw_listings
         description: One row per listing per source, upserted on (listing_id, source).
+        # Source freshness: catches a stalled pipeline (no fresh scrape). Run with
+        # `dbt source freshness` against a populated prod/dev DB (not the CI seed, whose
+        # timestamps are fixed). Wire into a monitoring schedule — see PROPOSALS.md P1 #4.
+        loaded_at_field: scraped_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 7, period: day}
         columns:
           - name: listing_id
             description: Source-native listing identifier.

@@ -23,3 +23,48 @@ models:
       +materialized: view
     marts:
       +materialized: table
+
+# Seed fixtures exist ONLY to give CI realistic rows to build marts/tests against. They
+# materialize the raw_* source tables, so they are enabled ONLY on the `ci` target — never
+# on dev/prod, where those tables are owned by the Python pipeline (guards against a stray
+# `dbt build` clobbering real data). Production uses `dbt run`, which never touches seeds.
+seeds:
+  danang_realestate:
+    +enabled: "{{ target.name == 'ci' }}"
+    raw_listings:
+      +column_types:
+        listing_id: BIGINT
+        category: INTEGER
+        price: BIGINT
+        price_per_sqm: DOUBLE
+        area_sqm: DOUBLE
+        bedrooms: INTEGER
+        bathrooms: INTEGER
+        num_floors: INTEGER
+        direction_code: INTEGER
+        legal_status_code: INTEGER
+        ward_code: INTEGER
+        lat: DOUBLE
+        lng: DOUBLE
+        account_id: BIGINT
+        phone: VARCHAR
+        is_broker: BOOLEAN
+        images: VARCHAR
+        posted_at: TIMESTAMP
+        scraped_at: TIMESTAMP
+        is_active: BOOLEAN
+    listing_price_history:
+      +column_types:
+        listing_id: BIGINT
+        price: BIGINT
+        price_per_sqm: DOUBLE
+        observed_at: TIMESTAMP
+        previous_price: BIGINT
+        price_change: BIGINT
+        price_change_pct: DOUBLE
+    geocode_cache:
+      +column_types:
+        lat: DOUBLE
+        lng: DOUBLE
+        confidence: DOUBLE
+        geocoded_at: TIMESTAMP

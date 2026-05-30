@@ -85,20 +85,23 @@ give Metabase its own least-privilege read-only PG role.
 
 ---
 
-## P1 — Data quality (proposed)
+## P1 — Data quality
 
-**#4 dbt source freshness + CI seed data.** Add a `freshness:` block on the `raw_listings`
-source keyed on `scraped_at` (warn >36 h, error >7 d) and a `dbt source freshness` step. Ship a
-small `dbt seed` CSV of ~20 realistic listings so CI builds marts against real rows (today CI
-builds on an empty schema — proves SQL parses, not that aggregations are correct). Low effort,
-high signal.
+**#4 dbt source freshness + CI seed data. ✅ done.** Added a `freshness:` block + `loaded_at_field:
+scraped_at` on the `raw_listings` source (warn >36 h, error >7 d). Shipped `dbt/seeds/*.csv`
+(12 listings + price history + geocode cache) **gated to a `ci` target** (`+enabled: target.name
+== 'ci'`) so they never clobber dev/prod (which use `dbt run`). CI now `dbt seed --target ci`
+then `dbt build --target ci` → marts/tests run on realistic rows (PASS=39): broker detection
+(account with 5 listings), price-change filtering (5% threshold), and the geocode-cache coalesce
+are all genuinely exercised. *Remaining:* wire `dbt source freshness` into a monitoring schedule
+(it can't run in CI — seed timestamps are fixed). Reuse `alerting.post_slack` for the alert.
 
-**#5 Incremental / atomic publish to Postgres.** `publish_to_postgres` drops+recreates each
-table → a brief window where Metabase reads an empty table. Two options:
-- *Staging-swap (recommended):* write to `pg.staging."<mart>"`, then `BEGIN; DROP … ; ALTER
-  TABLE staging.x RENAME/SET SCHEMA …; COMMIT` so the swap is atomic and readers never see empty.
-- *Upsert:* `INSERT … ON CONFLICT` on a primary key for `listings`; full-replace is fine for the
-  small aggregate marts. Staging-swap is simpler to make correct for all marts at once.
+**#5 Atomic publish to Postgres. ✅ done.** `publish_to_postgres` now builds each mart into a
+`<mart>__staging` table, then swaps ALL marts into place in **one native Postgres transaction**
+(`postgres_execute`: `BEGIN; DROP old; ALTER … RENAME staging→final; … COMMIT`). Metabase always
+reads either the full previous marts or the full new ones — never an empty/half-published table.
+Verified end-to-end against the live PG (104 listings, 0 leftover staging tables). *Future:* a
+true upsert/merge if the marts ever grow large enough that a full rewrite is too heavy.
 
 **#6 Geocoding robustness.** Add rate-limit + retry/backoff around Goong (tenacity, already a
 dep), persist a `confidence`/tier column, and a re-geocode pass that upgrades district-centroid
@@ -138,7 +141,8 @@ manual setup step).
 ---
 
 ## Suggested next sequence
-1. **P1 #4** (seed data + freshness) — unlocks meaningful CI for everything after it. *(M)*
-2. **P1 #5** (atomic publish) — removes the empty-table read window. *(M)*
-3. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
-4. **P2 #8** (dagster-dbt) — observability/lineage. *(M)*
+1. ✅ ~~**P1 #4** (seed data + freshness)~~ — done.
+2. ✅ ~~**P1 #5** (atomic publish)~~ — done.
+3. **P2 #8** (dagster-dbt) — observability/lineage; pairs well with the new seeds/tests. *(M)*
+4. **P1 #6** (geocoding retry/backoff + confidence) or **P1 #7** (scheduled rescrape). *(M/S)*
+5. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
