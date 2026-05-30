@@ -81,9 +81,42 @@ class TestScraperRegistry(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_scraper("does-not-exist")
 
-    def test_batdongsan_not_implemented(self):
-        with self.assertRaises(NotImplementedError):
-            BatDongSanScraper().scrape(transaction_type="sale", limit=1)
+    def test_batdongsan_scrape_wiring(self):
+        # Patch the browser half (_fetch_rendered) so scrape() is exercised end-to-end
+        # without Playwright/Cloudflare: page 1 returns two cards, page 2 is empty (stop).
+        from unittest.mock import patch
+
+        page1 = """
+        <div class="re__card-full" data-product-id="111">
+          <a href="/x-pr111" class="js__card-title">A</a>
+          <span class="re__card-config-price">2 tỷ</span>
+          <span class="re__card-config-area">50 m²</span>
+          <span class="re__card-location">Hải Châu, Đà Nẵng</span>
+        </div>
+        <div class="re__card-full" data-product-id="222">
+          <a href="/y-pr222" class="js__card-title">B</a>
+          <span class="re__card-config-price">3 tỷ</span>
+          <span class="re__card-config-area">60 m²</span>
+          <span class="re__card-location">Sơn Trà, Đà Nẵng</span>
+        </div>
+        """
+        scraper = BatDongSanScraper()
+        with patch.object(scraper, "_fetch_rendered", side_effect=[page1, ""]):
+            listings = scraper.scrape(transaction_type="sale", limit=10)
+
+        self.assertEqual([listing.listing_id for listing in listings], [111, 222])
+        self.assertEqual(listings[0].source, "batdongsan")
+        self.assertEqual(listings[0].price, 2_000_000_000)
+
+    def test_batdongsan_requires_playwright(self):
+        # With no browser available, the fetch half fails with a clear, actionable error.
+        import importlib.util
+
+        if importlib.util.find_spec("playwright") is not None:
+            self.skipTest("playwright extra installed; the missing-extra path can't be exercised")
+        with self.assertRaises(RuntimeError) as ctx:
+            BatDongSanScraper()._fetch_rendered("https://batdongsan.com.vn/nha-dat-ban-da-nang")
+        self.assertIn("Playwright", str(ctx.exception))
 
 
 if __name__ == "__main__":

@@ -30,6 +30,11 @@ services:
       SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
       PG_HOST: postgres
       PG_PORT: "5432"
+      PG_DB: ${PG_DB:-danang}
+      PG_USER: ${PG_USER:-danang}
+      # Same secret the Postgres container uses; read from the untracked .env here.
+      PG_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in orchestration/.env}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     volumes:
       - ./workspace.yaml:/app/workspace.yaml:ro
       - ../dbt:/app/dbt
@@ -51,6 +56,11 @@ services:
       SCRAPE_LIMIT: ${SCRAPE_LIMIT:-100}
       PG_HOST: postgres
       PG_PORT: "5432"
+      PG_DB: ${PG_DB:-danang}
+      PG_USER: ${PG_USER:-danang}
+      # Same secret the Postgres container uses; read from the untracked .env here.
+      PG_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in orchestration/.env}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     volumes:
       - ./workspace.yaml:/app/workspace.yaml:ro
       - ../dbt:/app/dbt

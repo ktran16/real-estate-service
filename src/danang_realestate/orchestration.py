@@ -17,8 +17,9 @@ extension (no extra Python dependency).
 
 Env overrides:
   SCRAPE_TYPE (all|sale|rent, default all), SCRAPE_LIMIT (int, default 100)
-  PG_HOST (default localhost), PG_PORT (5432), PG_DB (danang), PG_USER (danang),
-  PG_PASSWORD (danang), PG_SCHEMA (public)
+  PG_HOST, PG_PORT, PG_DB, PG_USER, PG_SCHEMA and the secret PG_PASSWORD (or
+  POSTGRES_PASSWORD) — all read via `config.settings` (single source of truth). The
+  password has no baked-in default; set it in an untracked .env (see .env.example).
 """
 from __future__ import annotations
 
@@ -28,37 +29,45 @@ from pathlib import Path
 
 from dagster import (
     DefaultScheduleStatus,
+    DefaultSensorStatus,
     Definitions,
     In,
     Nothing,
     Out,
     RetryPolicy,
+    RunFailureSensorContext,
     ScheduleDefinition,
     job,
     op,
+    run_failure_sensor,
 )
 
+from danang_realestate.alerting import post_slack
+from danang_realestate.config import settings
 from danang_realestate.db import get_connection, init_db
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
 from danang_realestate.scrapers import get_scraper
 from danang_realestate.utils.http import SafeHTTPClient
+from danang_realestate.validation.schema_validator import validate_schema
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DBT_DIR = REPO_ROOT / "dbt"
 
+# SCRAPE_SOURCE is the one knob not yet in Settings; keep the env read here.
 SCRAPE_SOURCE = os.getenv("SCRAPE_SOURCE", "nhatot")
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
 
-# Postgres serving DB (the copy Metabase reads). Defaults suit host runs against the
-# container published on 5433; inside the Dagster container set PG_HOST=postgres PG_PORT=5432.
-PG_HOST = os.getenv("PG_HOST", "localhost")
-PG_PORT = os.getenv("PG_PORT", "5432")
-PG_DB = os.getenv("PG_DB", "danang")
-PG_USER = os.getenv("PG_USER", "danang")
-PG_PASSWORD = os.getenv("PG_PASSWORD", "danang")
-PG_SCHEMA = os.getenv("PG_SCHEMA", "public")
+# Postgres serving DB (the copy Metabase reads). Read from config.settings, which sources
+# PG_HOST/PG_PORT/PG_DB/PG_USER/PG_SCHEMA and the secret PG_PASSWORD from env/.env.
+# Inside the Dagster container the compose sets PG_HOST=postgres PG_PORT=5432.
+PG_HOST = settings.pg_host
+PG_PORT = settings.pg_port
+PG_DB = settings.pg_db
+PG_USER = settings.pg_user
+PG_PASSWORD = settings.pg_password
+PG_SCHEMA = settings.pg_schema
 
 # The dbt marts to publish to Postgres for Metabase to serve.
 MARTS = ["listings", "price_by_district", "price_trend", "price_changes", "broker_listings"]
@@ -125,6 +134,11 @@ def publish_to_postgres(context) -> None:
     Uses DuckDB's native `postgres` extension to ATTACH Postgres and rewrite each mart
     table, so Metabase serves a fresh copy without ever opening the DuckDB file.
     """
+    if not PG_PASSWORD:
+        raise RuntimeError(
+            "Postgres password is not set. Define PG_PASSWORD (or POSTGRES_PASSWORD) in "
+            "an untracked .env — there is no baked-in default. See .env.example."
+        )
     conn = get_connection()
     try:
         conn.execute("INSTALL postgres; LOAD postgres;")
@@ -153,6 +167,28 @@ def publish_to_postgres(context) -> None:
         conn.close()
 
 
+@op(retry_policy=_NET_RETRY)
+def check_api_schema(context) -> None:
+    """Detect nhatot/chotot API schema drift against the NhaTotAd model.
+
+    Raises on drift so the run fails — `pipeline_failure_alert` then notifies. This is the
+    early-warning that a silent API change has broken (or is about to break) scraping.
+    """
+    client = SafeHTTPClient()
+    try:
+        report = validate_schema(client)
+    finally:
+        client.close()
+    report.print_summary()
+    if report.has_drift():
+        raise RuntimeError(
+            "nhatot/chotot API schema drift detected. "
+            f"Extra fields: {sorted(report.extra_in_api)}. "
+            f"Missing critical fields: {sorted(report.missing_in_api & {'ad_id', 'list_id', 'account_id', 'price', 'size', 'type'})}."
+        )
+    context.log.info("No critical API schema drift.")
+
+
 @job
 def daily_refresh():
     """Full refresh: scrape → geocode → dbt marts → publish to Postgres serving DB."""
@@ -160,6 +196,12 @@ def daily_refresh():
     geocoded = geocode_listings(start=scraped)
     transformed = run_dbt(start=geocoded)
     publish_to_postgres(start=transformed)
+
+
+@job
+def schema_drift_check():
+    """Standalone API-schema-drift check (fails loudly so the alert sensor fires)."""
+    check_api_schema()
 
 
 daily_refresh_schedule = ScheduleDefinition(
@@ -171,4 +213,35 @@ daily_refresh_schedule = ScheduleDefinition(
     default_status=DefaultScheduleStatus.RUNNING,
 )
 
-defs = Definitions(jobs=[daily_refresh], schedules=[daily_refresh_schedule])
+schema_drift_schedule = ScheduleDefinition(
+    name="schema_drift_schedule",
+    job=schema_drift_check,
+    # Weekly, Monday 04:00 (after Monday's daily refresh).
+    cron_schedule="0 4 * * 1",
+    execution_timezone="Asia/Ho_Chi_Minh",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
+
+@run_failure_sensor(
+    monitored_jobs=[daily_refresh, schema_drift_check],
+    default_status=DefaultSensorStatus.RUNNING,
+)
+def pipeline_failure_alert(context: RunFailureSensorContext) -> None:
+    """Post a Slack alert when daily_refresh or the schema-drift check fails.
+
+    No-ops if SLACK_WEBHOOK_URL is unset (see alerting.post_slack), so the sensor is safe
+    to leave enabled even without alerting configured.
+    """
+    run = context.dagster_run
+    error = context.failure_event.message or "(no error message)"
+    post_slack(
+        f":rotating_light: *{run.job_name}* failed (run {run.run_id[:8]}).\n{error}"
+    )
+
+
+defs = Definitions(
+    jobs=[daily_refresh, schema_drift_check],
+    schedules=[daily_refresh_schedule, schema_drift_schedule],
+    sensors=[pipeline_failure_alert],
+)

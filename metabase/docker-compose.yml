@@ -5,21 +5,25 @@
 # Metabase can stay up concurrently with pipeline writes (no single-writer dance).
 #
 # Run from this directory:
-#   docker network create danang-net   # once (shared with the orchestration stack)
+#   cp ../.env.example .env && edit .env   # set a strong POSTGRES_PASSWORD (once)
+#   docker network create danang-net       # once (shared with the orchestration stack)
 #   docker compose up -d
 # Then in Metabase: Add database → PostgreSQL → host=postgres port=5432
-#   db=danang user=danang password=danang.
+#   db=danang user=danang password=<your POSTGRES_PASSWORD>.
+# The password is read from the untracked .env in this dir — it is never committed.
 services:
   postgres:
     image: postgres:16
     container_name: danang-postgres
     environment:
-      POSTGRES_DB: danang
-      POSTGRES_USER: danang
-      POSTGRES_PASSWORD: danang
+      POSTGRES_DB: ${PG_DB:-danang}
+      POSTGRES_USER: ${PG_USER:-danang}
+      # Required: no default, so the stack refuses to start without a real secret.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in metabase/.env}
     ports:
-      # Host 5433 -> container 5432, for host-based pipeline runs / psql.
-      - "5433:5432"
+      # Bind to loopback only: host-based pipeline runs / psql reach 127.0.0.1:5433,
+      # but the port is not exposed to other hosts on the network.
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

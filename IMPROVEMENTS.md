@@ -6,9 +6,18 @@ Current state (Phase 1 complete): nhatot scrape → DuckDB → geocode (Nominati
 
 This plan is ordered by leverage. Each item notes the rough effort.
 
+> **Progress (2026-05-30):** P0 #2 (secrets) and #3 (API drift alerting) are **done**, and
+> P0 #1's parsing/normalization half **shipped** (only the Cloudflare/browser live run remains,
+> which can't be validated without a proxy). Researched solutions + the live-run plan for #1 and
+> concrete designs for the P1–P4 items are in **`PROPOSALS.md`**.
+
 ## P0 — Highest leverage
 
-1. **Real `batdongsan.com.vn` scraper (Playwright).** *(L)*
+1. **Real `batdongsan.com.vn` scraper (Playwright).** *(L)* — 🟡 **parsing shipped; live run
+   blocked.** Vietnamese price/area parsing, card extraction, `from_batdongsan`, and the
+   Playwright fetch scaffold are implemented + unit-tested (`scrapers/batdongsan.py`,
+   `tests/test_batdongsan.py`). The Cloudflare-cleared live crawl needs a real browser +
+   residential proxy — see `PROPOSALS.md` "P0 #1" for the bypass/selector-validation plan.
    The placeholder exists and the registry/`--source` plumbing is ready. batdongsan is
    Cloudflare-protected (verified HTTP 403 + challenge), so it needs a real browser:
    - Add a `playwright`-based scraper: launch chromium (stealth UA/viewport), load the
@@ -18,14 +27,20 @@ This plan is ordered by leverage. Each item notes the rough effort.
      residential-proxy support for sustained runs. Reuses loader/geocoder/dbt unchanged.
    - Then add `mogi` / `alonhadat` (the schema already anticipates these sources).
 
-2. **Secrets management.** *(S)*
+2. **Secrets management.** *(S)* — ✅ **done.** Password removed from compose (required from
+   untracked `.env`, `${POSTGRES_PASSWORD:?…}`), PG port bound to `127.0.0.1`, PG config
+   consolidated into `config.Settings` (also closes P3 #13), fail-fast if the secret is unset.
+   *Remaining ops task:* rotate the old `danang` password. (Original notes below.)
    Postgres credentials are the literal `danang/danang/danang` in `metabase/docker-compose.yml`
    and flow into `orchestration` via env; the DuckDB→PG `ATTACH` DSN embeds the password in
    SQL. Move to a `.env`/Docker secrets (`POSTGRES_PASSWORD` from env, not committed), use a
    strong password, and don't publish 5433 to all interfaces (bind 127.0.0.1). Add `goong_api_key`
    handling docs. Rotate before anything leaves localhost.
 
-3. **API drift alerting.** *(S)*
+3. **API drift alerting.** *(S)* — ✅ **done.** Added a `schema_drift_check` Dagster job +
+   weekly schedule and a `run_failure_sensor` (`pipeline_failure_alert`) that posts to Slack
+   (`alerting.post_slack`, `SLACK_WEBHOOK_URL`) for both it and `daily_refresh`. The drift op
+   now raises on drift so failures actually fire. (Original notes below.)
    There's a `validate_schema` command but nothing runs it. Add a Dagster job + schedule (e.g.
    weekly) and wire failure notifications (Dagster `run_failure_sensor` → Slack/email) for both
    it and `daily_refresh`, so a silent scrape break or nhatot schema change is noticed.

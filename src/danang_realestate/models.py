@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Optional
 
@@ -199,4 +200,40 @@ class NormalizedListing(BaseModel):
             scraped_at=scraped_at,
             is_active=True,
             raw_json=ad.model_dump_json()
+        )
+
+    @classmethod
+    def from_batdongsan(cls, card: dict, scraped_at: datetime) -> "NormalizedListing":
+        """Build a NormalizedListing from a parsed batdongsan.com.vn listing card.
+
+        `card` is the dict produced by `scrapers.batdongsan.parse_listing_cards`:
+        listing_id, url, title, transaction_type, price (int VND or None), area_sqm,
+        address_raw, posted_at (datetime or None). batdongsan exposes far fewer
+        structured fields than nhatot's JSON API (no rooms/legal/coords), so many
+        columns stay None and are filled later (e.g. district by geocoding).
+        """
+        price = card.get("price")
+        area = card.get("area_sqm")
+        price_per_sqm = None
+        if price and area and area > 0:
+            price_per_sqm = float(price) / float(area)
+
+        address_raw = card.get("address_raw")
+        district = clean_district(address_raw) if address_raw else None
+
+        return cls(
+            listing_id=int(card["listing_id"]),
+            source="batdongsan",
+            url=card["url"],
+            title=normalize_text(card.get("title")) or None,
+            transaction_type=card.get("transaction_type", "sale"),
+            price=int(price) if price is not None else None,
+            price_per_sqm=price_per_sqm,
+            area_sqm=area,
+            address_raw=address_raw,
+            district=district,
+            posted_at=card.get("posted_at"),
+            scraped_at=scraped_at,
+            is_active=True,
+            raw_json=json.dumps(card, default=str, ensure_ascii=False),
         )
