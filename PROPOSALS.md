@@ -129,8 +129,13 @@ and by an import-time self-heal (`dbt parse`) for fresh containers/tests. **Veri
 materializing the full asset job against the live stack (all dbt models + checks passed, marts
 published atomically, RUN_SUCCESS).
 
-**#9 Postgres durability.** Scheduled `pg_dump` (a Dagster op or sidecar + cron) to a mounted
-volume, documented restore, and pin Metabase + Postgres image **digests** (not just tags).
+**#9 Durability. ✅ done.** Reframed to back up the **DuckDB working store** (raw listings +
+price history + geocode cache) — that's the irreplaceable data; the Postgres marts are a
+regenerable serving copy (`publish_to_postgres`), so they need no separate dump (restore = re-run
+the pipeline). Added `pipeline/backup.backup_duckdb` (`EXPORT DATABASE` → timestamped, rotated
+snapshots; restore via `IMPORT DATABASE`) wired as a `backup_database` op in `weekly_maintenance`
+(`BACKUPS_DIR`/`BACKUP_KEEP` env). Pinned Metabase + Postgres images by **digest**. Unit-tested
+(snapshot round-trips via IMPORT; rotation) + smoke-tested against the real DB.
 
 **#10 Observability.** 🟡 **partial.** Added a `check_mart_health` op in both pipelines (between
 dbt and publish) that logs all mart row counts and **raises if a critical mart (`listings`,
@@ -142,7 +147,11 @@ metrics, and a drop-detection sensor (alert when a row count falls materially vs
 
 **#11 More tests:** `publish_to_postgres` integration test via testcontainers Postgres;
 loader/price-tracker unit tests (the price-change transaction path); a CLI smoke test.
-**#12 Typing + pre-commit:** add `mypy` to CI and a `pre-commit` config (ruff + mypy).
+**#12 Typing + pre-commit: ✅ done.** Added `mypy` (config in pyproject: `files=["src"]`,
+`ignore_missing_imports`, `no_implicit_optional`) — fixed the 18 type errors (implicit-Optional
+params, BS4 attr coercion, dict.get on Optional keys, DuckDB `fetchone()[0]` via a `_scalar_int`
+helper) so it's clean across 23 files, and wired a CI `mypy` step + `.pre-commit-config.yaml`
+(ruff + mypy).
 **#13 Config consolidation:** ✅ done as part of P0 #2 (PG_* now in `Settings`).
 
 ## P4 — Product/analytics (proposed)
@@ -161,7 +170,9 @@ manual setup step).
 3. ✅ ~~**P1 #6** (geocoding confidence + re-geocode)~~ — done.
 4. ✅ ~~**P1 #7** (scheduled rescrape)~~ — done.
 5. ✅ ~~**P2 #8** (dagster-dbt)~~ — done.
-6. **P2 #9/#10** (PG pg_dump backups + pin image digests; structured logging + drop-detection
-   sensor → `post_slack`). *(S)*
-7. **P3 #11/#12** (integration tests via testcontainers; mypy + pre-commit). *(M/S)*
-8. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*
+6. ✅ ~~**P2 #9** (durability: DuckDB backups + pin digests)~~ — done.
+7. ✅ ~~**P3 #12** (mypy + pre-commit)~~ — done.
+8. **P2 #10 remainder** (structured logging + drop-detection sensor → `post_slack`). *(S)*
+9. **P3 #11** (integration tests via testcontainers; loader/price-tracker unit tests). *(M)*
+10. **P4** (richer marts, deals alerting, dashboards-as-code). *(M)*
+11. **P0 #1 live run** — once you have a proxy + a captured fixture to validate selectors. *(L)*

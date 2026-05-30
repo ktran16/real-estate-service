@@ -55,6 +55,7 @@ from dagster_dbt import DbtCliResource, DbtProject, dbt_assets
 from danang_realestate.alerting import post_slack
 from danang_realestate.config import settings
 from danang_realestate.db import get_connection, init_db
+from danang_realestate.pipeline.backup import backup_duckdb
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
 from danang_realestate.pipeline.rescraper import rescrape_active_listings
@@ -116,6 +117,12 @@ dbt_resource = DbtCliResource(project_dir=dbt_project)
 # Shared pipeline steps (plain functions) — called by both the assets and the op-based jobs so
 # there is a single implementation of each step. `context` only needs a `.log`.
 # --------------------------------------------------------------------------------------------
+def _scalar_int(conn, sql: str, params=None) -> int:
+    """Run a scalar `SELECT count(*)`-style query and return it as an int (0 if NULL/empty)."""
+    row = conn.execute(sql, params or []).fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
+
+
 def _run_scrape_and_load(context) -> None:
     """Scrape listings and upsert them (records price history)."""
     init_db()
@@ -152,15 +159,16 @@ def _run_check_mart_health(context) -> None:
     """Fail if a mart that must have rows came out empty (guard before publishing)."""
     conn = get_connection()
     try:
-        counts = {}
+        counts: dict[str, int] = {}
         for mart in MARTS:
-            present = conn.execute(
+            present = _scalar_int(
+                conn,
                 "SELECT count(*) FROM duckdb_tables() "
                 "WHERE database_name = current_database() AND table_name = ?",
                 [mart],
-            ).fetchone()[0]
+            )
             if present:
-                counts[mart] = conn.execute(f'SELECT count(*) FROM "{mart}"').fetchone()[0]
+                counts[mart] = _scalar_int(conn, f'SELECT count(*) FROM "{mart}"')
         context.log.info("Mart row counts: %s", counts)
         empty_critical = [m for m in CRITICAL_NONEMPTY_MARTS if counts.get(m, 0) == 0]
         if empty_critical:
@@ -194,11 +202,12 @@ def _run_publish_to_postgres(context) -> None:
             published = []
             swap_stmts = []
             for mart in MARTS:
-                present = conn.execute(
+                present = _scalar_int(
+                    conn,
                     "SELECT count(*) FROM duckdb_tables() "
                     "WHERE database_name = current_database() AND table_name = ?",
                     [mart],
-                ).fetchone()[0]
+                )
                 if not present:
                     context.log.info("Mart '%s' not found in DuckDB; skipping.", mart)
                     continue
@@ -207,9 +216,7 @@ def _run_publish_to_postgres(context) -> None:
                 conn.execute(
                     f'CREATE TABLE pg.{PG_SCHEMA}."{staging}" AS SELECT * FROM "{mart}"'
                 )
-                n = conn.execute(
-                    f'SELECT count(*) FROM pg.{PG_SCHEMA}."{staging}"'
-                ).fetchone()[0]
+                n = _scalar_int(conn, f'SELECT count(*) FROM pg.{PG_SCHEMA}."{staging}"')
                 published.append(f"{mart}={n}")
                 swap_stmts.append(f'DROP TABLE IF EXISTS {PG_SCHEMA}."{mart}";')
                 swap_stmts.append(f'ALTER TABLE {PG_SCHEMA}."{staging}" RENAME TO "{mart}";')
@@ -315,6 +322,15 @@ def regeocode_low_confidence(context) -> None:
 
 
 @op(out=Out(Nothing), ins={"start": In(Nothing)})
+def backup_database(context) -> None:
+    """Snapshot the DuckDB working store (the irreplaceable raw/price-history data) + rotate."""
+    backups_dir = os.getenv("BACKUPS_DIR", str(REPO_ROOT / "backups"))
+    keep = int(os.getenv("BACKUP_KEEP", "7"))
+    snapshot = backup_duckdb(settings.duckdb_path, backups_dir, keep=keep)
+    context.log.info("DuckDB backup: %s", snapshot or "(skipped — no DB file)")
+
+
+@op(out=Out(Nothing), ins={"start": In(Nothing)})
 def run_dbt(context) -> None:
     """Rebuild the analytics marts via dbt (DbtCliResource)."""
     _run_dbt_build_cli(context)
@@ -352,10 +368,12 @@ def check_api_schema(context) -> None:
 
 @job
 def weekly_maintenance():
-    """Re-check active listings (deactivate vanished) then upgrade low-confidence geocodes."""
+    """Rescrape (deactivate vanished) → upgrade geocodes → rebuild → publish, then back up."""
     rescraped = rescrape_active()
     transformed = run_dbt(start=regeocode_low_confidence(start=rescraped))
-    publish_to_postgres(start=check_mart_health(start=transformed))
+    published = check_mart_health(start=transformed)
+    publish_to_postgres(start=published)
+    backup_database(start=published)
 
 
 @job

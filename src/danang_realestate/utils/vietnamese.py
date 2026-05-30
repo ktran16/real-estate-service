@@ -22,7 +22,7 @@ def remove_diacritics(text: str) -> str:
     text = text.replace("đ", "d").replace("Đ", "D")
     return text
 
-def normalize_text(text: str) -> str:
+def normalize_text(text: str | None) -> str:
     """Normalize whitespace and lowercase a string."""
     if not text:
         return ""
@@ -30,7 +30,7 @@ def normalize_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text)
     return text
 
-def clean_district(district_raw: str) -> str | None:
+def clean_district(district_raw: str | None) -> str | None:
     """Extract and normalize district name from raw text for Da Nang."""
     if not district_raw:
         return None

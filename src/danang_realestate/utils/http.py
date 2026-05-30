@@ -57,7 +57,7 @@ class SafeHTTPClient:
         wait=wait_exponential(multiplier=2, min=2, max=15),
         reraise=True
     )
-    def get(self, url: str, params: dict = None, extra_headers: dict = None) -> dict:
+    def get(self, url: str, params: Optional[dict] = None, extra_headers: Optional[dict] = None) -> dict:
         """Perform a GET request with retry, backoff, and user-agent rotation."""
         self._sleep_delay()
 

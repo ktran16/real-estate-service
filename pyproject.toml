@@ -37,6 +37,7 @@ danang-realestate = "danang_realestate.cli:app"
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+    "mypy>=1.11",
 ]
 
 [build-system]
@@ -57,3 +58,11 @@ src = ["src", "tests"]
 select = ["E", "F", "I"]
 # Long lines are common in logging/console strings here; ignore E501.
 ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+# Third-party libs here (duckdb, geopy, bs4, dagster) ship partial/no stubs; don't fail on them.
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true

@@ -86,6 +86,13 @@ def parse_area_sqm(text: Optional[str]) -> Optional[float]:
     return _to_float(m.group(1))
 
 
+def _attr_str(value) -> str:
+    """Coerce a BeautifulSoup attribute (str | list | None) to a single string."""
+    if isinstance(value, list):
+        return value[0] if value else ""
+    return value or ""
+
+
 def _first_text(card, selectors: List[str]) -> Optional[str]:
     """Return the stripped text of the first selector that matches in `card`."""
     for sel in selectors:
@@ -109,15 +116,15 @@ def parse_listing_cards(html: str, transaction_type: str = "sale") -> List[dict]
         link = card.select_one("a[href]")
         if not link:
             continue
-        href = link.get("href", "")
+        href = _attr_str(link.get("href"))
         url = href if href.startswith("http") else f"{BASE_URL}{href}"
 
         # Listing id: prefer an explicit data attribute, else trailing digits in the URL
         # (batdongsan URLs end in `-pr<digits>`).
-        listing_id = card.get("data-product-id") or link.get("data-product-id")
+        listing_id = _attr_str(card.get("data-product-id") or link.get("data-product-id"))
         if not listing_id:
             m = re.search(r"-pr(\d+)", href) or re.search(r"(\d{5,})", href)
-            listing_id = m.group(1) if m else None
+            listing_id = m.group(1) if m else ""
         if not listing_id:
             continue
 

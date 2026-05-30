@@ -35,7 +35,7 @@ class NhaTotScraper(BaseScraper):
         # 1010: Căn hộ/Chung cư, 1020: Nhà ở, 1030: Văn phòng/Mặt bằng, 1040: Đất, 1050: Phòng trọ
         categories = [1010, 1020, 1030, 1040, 1050]
         
-        all_listings = []
+        all_listings: List[NormalizedListing] = []
         scraped_at = utcnow()
 
         for cg in categories:

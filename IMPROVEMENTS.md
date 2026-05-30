@@ -72,9 +72,10 @@ This plan is ordered by leverage. Each item notes the rough effort.
    are asset checks; no subprocess (op jobs use `DbtCliResource`). Verified end-to-end against the
    live stack. See `PROPOSALS.md` P2 #8.
 
-9. **Postgres durability.** *(S)*
-   Add scheduled `pg_dump` backups (a Dagster op or sidecar) and document restore. Pin the
-   Metabase + Postgres image digests.
+9. **Durability.** *(S)* — ✅ **done.** Back up the irreplaceable **DuckDB** store
+   (`backup_duckdb`, `EXPORT DATABASE` + rotation) via a `backup_database` op in
+   weekly_maintenance; pinned Metabase + Postgres image digests. (PG is a regenerable serving
+   copy, so it needs no dump.) See `PROPOSALS.md` P2 #9.
 
 10. **Observability.** *(S)* — 🟡 **partial.** Added `check_mart_health` (fails the run + Slack
     alert if a critical mart is empty, before publish). Remaining: structured logging, run
@@ -84,8 +85,8 @@ This plan is ordered by leverage. Each item notes the rough effort.
 
 11. **More tests.** *(M)* Integration test for `publish_to_postgres` (testcontainers Postgres),
     loader/price-tracker unit tests (the price-change path), CLI smoke tests.
-12. **Typing + pre-commit.** *(S)* Add mypy to CI and a pre-commit config (ruff + mypy) so
-    issues are caught before push.
+12. **Typing + pre-commit.** *(S)* — ✅ **done.** mypy clean across 23 files (config + CI step)
+    and a `.pre-commit-config.yaml` (ruff + mypy). See `PROPOSALS.md` P3 #12.
 13. **Config consolidation.** *(S)* Move the `PG_*` and scrape settings into `config.py`
     `Settings` (single source of truth) instead of reading `os.getenv` in `orchestration.py`.
 

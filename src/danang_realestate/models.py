@@ -95,7 +95,7 @@ class NormalizedListing(BaseModel):
             1040: "land",
             1050: "room"
         }
-        prop_type = property_type_map.get(ad.category, "other")
+        prop_type = property_type_map.get(ad.category, "other") if ad.category is not None else "other"
 
         # Transaction type mapping (s = sale, k = sale, u = rent, h = rent)
         tx_type = "rent" if ad.type in ["u", "h"] else "sale"
@@ -128,7 +128,7 @@ class NormalizedListing(BaseModel):
         }
 
         # Look in params for detailed strings if available
-        for p in ad.params:
+        for p in (ad.params or []):
             if p.id == "direction":
                 direction_name = p.value
             elif p.id == "furniture":
@@ -137,7 +137,11 @@ class NormalizedListing(BaseModel):
         if not direction_name and ad.direction in direction_map:
             direction_name = f"Hướng {direction_map[ad.direction]}"
 
-        legal_status_name = legal_map.get(ad.property_legal_document)
+        legal_status_name = (
+            legal_map.get(ad.property_legal_document)
+            if ad.property_legal_document is not None
+            else None
+        )
 
         # Build raw address: ward + district + Da Nang
         addr_parts = []
