@@ -14,6 +14,27 @@ def load_listings(conn: duckdb.DuckDBPyConnection, listings: List[NormalizedList
         logger.info("No listings to load.")
         return
 
+    # The same ad can surface under multiple nhatot categories within a single scrape, so the
+    # batch may contain duplicate (listing_id, source) rows. raw_listings tolerates that
+    # (INSERT OR REPLACE), but listing_price_history does not: two rows for a brand-new listing
+    # share the PK (listing_id, source, observed_at) and the plain INSERT then violates the
+    # constraint, rolling back the whole load. Dedupe up front, keeping the last occurrence.
+    seen = set()
+    deduped: List[NormalizedListing] = []
+    for listing in reversed(listings):
+        key = (listing.listing_id, listing.source)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(listing)
+    deduped.reverse()
+    if len(deduped) != len(listings):
+        logger.info(
+            "Deduplicated batch: %d listings -> %d unique (listing_id, source).",
+            len(listings), len(deduped),
+        )
+    listings = deduped
+
     # First, detect price changes before we modify raw_listings
     new_obs, price_updates = detect_price_changes(conn, listings)
     history_to_insert = new_obs + price_updates

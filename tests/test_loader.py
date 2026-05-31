@@ -62,6 +62,17 @@ def test_first_load_records_new_observations(conn):
     ]
 
 
+def test_duplicate_listing_in_batch_is_deduped(conn):
+    # The same ad can appear under multiple nhatot categories within one scrape: identical
+    # (listing_id, source, scraped_at). Without deduping, the second new-observation row
+    # collides on the price-history PK and rolls back the whole load. It must not.
+    ts = datetime(2026, 5, 1)
+    load_listings(conn, [_listing(1, 2_000_000_000, ts), _listing(1, 2_000_000_000, ts)])
+
+    assert _count(conn, "raw_listings") == 1
+    assert _count(conn, "listing_price_history") == 1
+
+
 def test_price_change_records_history_and_updates_listing(conn):
     load_listings(conn, [_listing(1, 2_000_000_000, datetime(2026, 5, 1))])
     # Re-load the same listing at a lower price.
