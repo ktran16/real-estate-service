@@ -1,4 +1,4 @@
-"""Integration test for `_run_publish_to_postgres` against a real Postgres (testcontainers).
+"""Integration test for `publish_marts_to_postgres` against a real Postgres (testcontainers).
 
 Self-skips when Docker or `testcontainers` is unavailable (e.g. a laptop without Docker), so the
 default `pytest` run stays hermetic; it exercises the real DuckDB→Postgres atomic-swap publish
@@ -12,14 +12,9 @@ import pytest
 
 testcontainers_pg = pytest.importorskip("testcontainers.postgres")
 PostgresContainer = testcontainers_pg.PostgresContainer
-# The publish op lives in orchestration.py, which imports dagster (an optional extra).
-pytest.importorskip("dagster")
+# The publish logic lives in pipeline/publisher.py (dagster-free), so no dagster extra needed.
 
-
-class _Ctx:
-    """Minimal stand-in for a Dagster op context (only `.log` is used)."""
-
-    log = logging.getLogger("test.publish")
+_LOG = logging.getLogger("test.publish")
 
 
 @pytest.fixture(scope="module")
@@ -75,23 +70,23 @@ def _pg_table_exists(container, table: str) -> bool:
 
 @pytest.fixture()
 def publish(pg_container, tmp_path, monkeypatch):
-    """Point orchestration's PG_* + DuckDB path at the container/temp DB and return the op fn."""
-    from danang_realestate import orchestration
+    """Point publisher's PG_* + DuckDB path at the container/temp DB and return the module."""
+    from danang_realestate.pipeline import publisher
 
-    monkeypatch.setattr(orchestration.settings, "duckdb_path", str(tmp_path / "marts.duckdb"))
-    monkeypatch.setattr(orchestration, "PG_HOST", pg_container.get_container_host_ip())
-    monkeypatch.setattr(orchestration, "PG_PORT", int(pg_container.get_exposed_port(5432)))
-    monkeypatch.setattr(orchestration, "PG_DB", "danang")
-    monkeypatch.setattr(orchestration, "PG_USER", "danang")
-    monkeypatch.setattr(orchestration, "PG_PASSWORD", "secret")
-    monkeypatch.setattr(orchestration, "PG_SCHEMA", "public")
-    return orchestration
+    monkeypatch.setattr(publisher.settings, "duckdb_path", str(tmp_path / "marts.duckdb"))
+    monkeypatch.setattr(publisher, "PG_HOST", pg_container.get_container_host_ip())
+    monkeypatch.setattr(publisher, "PG_PORT", int(pg_container.get_exposed_port(5432)))
+    monkeypatch.setattr(publisher, "PG_DB", "danang")
+    monkeypatch.setattr(publisher, "PG_USER", "danang")
+    monkeypatch.setattr(publisher, "PG_PASSWORD", "secret")
+    monkeypatch.setattr(publisher, "PG_SCHEMA", "public")
+    return publisher
 
 
 def test_publish_creates_marts_in_postgres(publish, pg_container, tmp_path):
     _seed_marts(tmp_path / "marts.duckdb", listings_rows=10, district_rows=3)
 
-    publish._run_publish_to_postgres(_Ctx())
+    publish.publish_marts_to_postgres(_LOG)
 
     assert _pg_count(pg_container, "listings") == 10
     assert _pg_count(pg_container, "price_by_district") == 3
@@ -101,11 +96,11 @@ def test_publish_creates_marts_in_postgres(publish, pg_container, tmp_path):
 
 def test_republish_atomically_swaps_without_leftover_staging(publish, pg_container, tmp_path):
     _seed_marts(tmp_path / "marts.duckdb", listings_rows=10, district_rows=3)
-    publish._run_publish_to_postgres(_Ctx())
+    publish.publish_marts_to_postgres(_LOG)
 
     # A subsequent run with different row counts replaces the marts in place.
     _seed_marts(tmp_path / "marts.duckdb", listings_rows=4, district_rows=5)
-    publish._run_publish_to_postgres(_Ctx())
+    publish.publish_marts_to_postgres(_LOG)
 
     assert _pg_count(pg_container, "listings") == 4
     assert _pg_count(pg_container, "price_by_district") == 5
@@ -117,4 +112,4 @@ def test_publish_requires_password(publish, monkeypatch, tmp_path):
     _seed_marts(tmp_path / "marts.duckdb", listings_rows=1, district_rows=1)
     monkeypatch.setattr(publish, "PG_PASSWORD", "")
     with pytest.raises(RuntimeError, match="password is not set"):
-        publish._run_publish_to_postgres(_Ctx())
+        publish.publish_marts_to_postgres(_LOG)

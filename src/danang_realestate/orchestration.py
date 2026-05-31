@@ -64,6 +64,7 @@ from danang_realestate.pipeline.deals import detect_new_deals, record_deal_alert
 from danang_realestate.pipeline.geocoder import Geocoder
 from danang_realestate.pipeline.loader import load_listings
 from danang_realestate.pipeline.observability import detect_row_drops, record_mart_counts
+from danang_realestate.pipeline.publisher import MARTS, _scalar_int, publish_marts_to_postgres
 from danang_realestate.pipeline.rescraper import rescrape_active_listings
 from danang_realestate.scrapers import get_scraper
 from danang_realestate.scrapers.nhatot import NhaTotScraper
@@ -78,27 +79,8 @@ SCRAPE_SOURCE = os.getenv("SCRAPE_SOURCE", "nhatot")
 SCRAPE_TYPE = os.getenv("SCRAPE_TYPE", "all")
 SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", "100"))
 
-# Postgres serving DB (the copy Metabase reads). Read from config.settings.
-PG_HOST = settings.pg_host
-PG_PORT = settings.pg_port
-PG_DB = settings.pg_db
-PG_USER = settings.pg_user
-PG_PASSWORD = settings.pg_password
-PG_SCHEMA = settings.pg_schema
-
-# The dbt marts to publish to Postgres for Metabase to serve.
-MARTS = [
-    "listings",
-    "price_by_district",
-    "price_trend",
-    "price_changes",
-    "broker_listings",
-    "price_per_sqm_by_ward",
-    "listing_days_on_market",
-    "listing_velocity",
-    "broker_concentration",
-    "deals",
-]
+# Postgres serving DB connection + the MARTS list + the publish step itself live in
+# pipeline/publisher.py (dagster-free, so host scripts can publish too); imported above.
 
 # Marts that should never be empty after a successful run (an empty one means the pipeline
 # broke upstream). price_changes/broker_listings can legitimately be empty, so they're excluded.
@@ -134,12 +116,6 @@ dbt_resource = DbtCliResource(project_dir=dbt_project)
 # Shared pipeline steps (plain functions) — called by both the assets and the op-based jobs so
 # there is a single implementation of each step. `context` only needs a `.log`.
 # --------------------------------------------------------------------------------------------
-def _scalar_int(conn, sql: str, params=None) -> int:
-    """Run a scalar `SELECT count(*)`-style query and return it as an int (0 if NULL/empty)."""
-    row = conn.execute(sql, params or []).fetchone()
-    return int(row[0]) if row and row[0] is not None else 0
-
-
 def _run_scrape_and_load(context) -> None:
     """Scrape listings and upsert them (records price history)."""
     init_db()
@@ -204,57 +180,12 @@ def _run_check_mart_health(context) -> dict[str, int]:
 
 
 def _run_publish_to_postgres(context) -> None:
-    """Publish the dbt marts to the Postgres serving DB atomically (staging + one swap txn).
+    """Publish the dbt marts to the Postgres serving DB (atomic swap).
 
-    Each mart is written to a `<mart>__staging` table; then ALL marts are swapped into place in
-    a single native Postgres transaction (DROP old + RENAME staging → final). Metabase always
-    reads either the full previous marts or the full new ones — never an empty/half-published
-    table.
+    Thin wrapper over the dagster-free `pipeline.publisher.publish_marts_to_postgres` so the
+    same publish runs from both the Dagster ops/assets and host scripts.
     """
-    if not PG_PASSWORD:
-        raise RuntimeError(
-            "Postgres password is not set. Define PG_PASSWORD (or POSTGRES_PASSWORD) in "
-            "an untracked .env — there is no baked-in default. See .env.example."
-        )
-    conn = get_connection()
-    try:
-        conn.execute("INSTALL postgres; LOAD postgres;")
-        dsn = f"host={PG_HOST} port={PG_PORT} dbname={PG_DB} user={PG_USER} password={PG_PASSWORD}"
-        conn.execute(f"ATTACH '{dsn}' AS pg (TYPE postgres)")
-        try:
-            published = []
-            swap_stmts = []
-            for mart in MARTS:
-                present = _scalar_int(
-                    conn,
-                    "SELECT count(*) FROM duckdb_tables() "
-                    "WHERE database_name = current_database() AND table_name = ?",
-                    [mart],
-                )
-                if not present:
-                    context.log.info("Mart '%s' not found in DuckDB; skipping.", mart)
-                    continue
-                staging = f"{mart}__staging"
-                conn.execute(f'DROP TABLE IF EXISTS pg.{PG_SCHEMA}."{staging}"')
-                conn.execute(
-                    f'CREATE TABLE pg.{PG_SCHEMA}."{staging}" AS SELECT * FROM "{mart}"'
-                )
-                n = _scalar_int(conn, f'SELECT count(*) FROM pg.{PG_SCHEMA}."{staging}"')
-                published.append(f"{mart}={n}")
-                swap_stmts.append(f'DROP TABLE IF EXISTS {PG_SCHEMA}."{mart}";')
-                swap_stmts.append(f'ALTER TABLE {PG_SCHEMA}."{staging}" RENAME TO "{mart}";')
-
-            if swap_stmts:
-                swap_sql = "BEGIN;\n" + "\n".join(swap_stmts) + "\nCOMMIT;"
-                conn.execute("CALL postgres_execute('pg', ?)", [swap_sql])
-        finally:
-            conn.execute("DETACH pg")
-        context.log.info(
-            "Published marts to Postgres %s:%s (atomic swap) → %s",
-            PG_HOST, PG_PORT, ", ".join(published) or "(none)",
-        )
-    finally:
-        conn.close()
+    publish_marts_to_postgres(context.log)
 
 
 def _run_dbt_build_cli(context) -> None:
