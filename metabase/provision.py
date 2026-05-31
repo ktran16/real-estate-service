@@ -163,9 +163,21 @@ class MetabaseClient:
 
     # -- low-level ----------------------------------------------------------------------------
     def request(self, method: str, path: str, **kwargs) -> Any:
-        resp = self._http.request(
-            method, f"{self.base_url}{path}", headers=self._headers(), **kwargs
-        )
+        # Metabase often closes idle keep-alive connections; httpx then reuses a dead socket
+        # and raises RemoteProtocolError ("Server disconnected without sending a response")
+        # before the request is processed. That's safe to retry on a fresh connection.
+        last_exc: Optional[Exception] = None
+        for attempt in range(3):
+            try:
+                resp = self._http.request(
+                    method, f"{self.base_url}{path}", headers=self._headers(), **kwargs
+                )
+                break
+            except (httpx.RemoteProtocolError, httpx.ConnectError) as exc:
+                last_exc = exc
+                logger.debug("%s %s: %s (retry %d/2)", method, path, exc, attempt + 1)
+        else:
+            raise MetabaseError(f"{method} {path} failed after retries: {last_exc}")
         if resp.status_code >= 400:
             raise MetabaseError(f"{method} {path} -> {resp.status_code}: {resp.text}")
         if resp.content:
